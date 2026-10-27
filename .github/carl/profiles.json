@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "organization": [],
+    "repository": []
+  },
+  "profiles": [
+    {
+      "id": "foundations",
+      "description": "Provider-neutral documentation, security and repository governance; no product stack selected.",
+      "packs": [
+        "core/baseline",
+        "core/carl",
+        "core/cognition-governance",
+        "core/dependency",
+        "core/identity",
+        "core/memory-cache",
+        "core/pr-contract",
+        "core/security",
+        "core/tool-permission-tiers",
+        "platform/cicd"
+      ]
+    }
+  ],
+  "active": {
+    "profile": "foundations"
+  }
+}

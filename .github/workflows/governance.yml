@@ -1,0 +1,47 @@
+name: Governance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  carl:
+    name: cARL governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install checksum-verified cARL 1.0.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="$(mktemp -d "$RUNNER_TEMP/carl.XXXXXX")"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+            https://github.com/goldjg/cARL/releases/download/v1.0.2/carl_1.0.2_linux_amd64.tar.gz \
+            --output "$tool_dir/carl.tar.gz"
+          printf '%s  %s\n' \
+            d56eee02d6e008c42feb6b5a97ac86ea94599a0440d596bd3be015112d01c264 \
+            "$tool_dir/carl.tar.gz" | sha256sum --check
+          tar --extract --gzip --file "$tool_dir/carl.tar.gz" --directory "$tool_dir" carl
+          echo "$tool_dir" >> "$GITHUB_PATH"
+      - name: Validate canonical governance and effective policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          carl version
+          carl doctor
+          carl status
+          carl pack effective
+          carl trace
+          carl harness status
+          git diff --check
+          test -z "$(git status --porcelain)"
