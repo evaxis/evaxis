@@ -6,4 +6,7 @@ context, schema/version and representation. It deliberately contains no
 assessment outcome. The
 [architecture specification](https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md)
 owns the normative meaning, including identity correlation limits and lifecycle
-uncertainty. Pending review; no collector or comparison engine is implemented.
+uncertainty. Collector authentication fields are producer claims only, and the
+representation must contain exactly one of a captured `content` value or a
+`reference`; explicit JSON `null` is a captured value. Pending review; no
+collector or comparison engine is implemented.

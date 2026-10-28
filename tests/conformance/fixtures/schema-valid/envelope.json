@@ -11,5 +11,13 @@
   "createdAt": "2026-01-02T03:04:05Z",
   "manifestId": "urn:example:manifest:001",
   "observationIds": ["urn:example:observation:001"],
-  "assessmentIds": ["urn:example:assessment:001"]
+  "assessmentIds": ["urn:example:assessment:001"],
+  "integrity": {
+    "claimStatus": "claims-verified",
+    "verificationClaim": {
+      "claimedVerifier": "synthetic-verifier",
+      "claimedAt": "2026-01-02T03:04:05Z",
+      "claimedMethod": "synthetic-signature-check"
+    }
+  }
 }

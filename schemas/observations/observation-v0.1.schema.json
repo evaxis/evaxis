@@ -100,12 +100,18 @@
           "$ref": "#/$defs/digest"
         }
       },
-      "anyOf": [
+      "oneOf": [
         {
-          "required": ["content"]
+          "required": ["content"],
+          "not": {
+            "required": ["reference"]
+          }
         },
         {
-          "required": ["reference"]
+          "required": ["reference"],
+          "not": {
+            "required": ["content"]
+          }
         }
       ]
     },
@@ -216,7 +222,8 @@
     "collector": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["authority", "id", "version", "identityStatus"],
+      "description": "Producer-supplied identity assertion only; it is not receiver-established authentication.",
+      "required": ["authority", "id", "version", "identityClaimStatus"],
       "properties": {
         "authority": {
           "$ref": "#/$defs/identifier"
@@ -227,8 +234,14 @@
         "version": {
           "$ref": "#/$defs/identifier"
         },
-        "identityStatus": {
-          "enum": ["asserted", "authenticated", "unverified", "invalid", "unknown"]
+        "identityClaimStatus": {
+          "enum": [
+            "asserted",
+            "claims-authenticated",
+            "unverified",
+            "claims-invalid",
+            "unknown"
+          ]
         },
         "identityMethod": {
           "$ref": "#/$defs/identifier"

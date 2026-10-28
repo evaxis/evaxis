@@ -7,4 +7,5 @@ visibility limits and collection coverage. Its
 distinguishes collection completeness from control coverage and collection
 errors from assessment outcomes. A successful collection status is bounded by
 its declared scope; it is not proof of whole-environment coverage. Pending
-review; no collector is implemented.
+review; no collector is implemented. Package validation enforces target-set
+partitioning and rejects successful runs with failed source attempts.

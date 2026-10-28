@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import copy
 import json
 import re
 import sys
@@ -28,12 +29,16 @@ INVALID_FIXTURES = {
     "missing-collection-timestamp.json": "manifest",
     "invalid-integrity-metadata.json": "envelope",
     "failed-assessment-pass.json": "assessment",
+    "passing-assessment-without-basis.json": "assessment",
+    "representation-content-and-reference.json": "observation",
 }
 VALID_FIXTURES = {
-    "envelope.json": "envelope",
-    "collection-manifest.json": "manifest",
-    "observation.json": "observation",
-    "assessment-result.json": "assessment",
+    "envelope.json": ("envelope", "envelope"),
+    "collection-manifest.json": ("manifest", "manifest"),
+    "observation.json": ("observation", "observation"),
+    "observation-null-content.json": ("observation-null-content", "observation"),
+    "assessment-result.json": ("assessment", "assessment"),
+    "assessment-declared-scope.json": ("assessment-declared-scope", "assessment"),
 }
 REQUIRED_CASE_IDS = {
     "identical-observations-across-runs",
@@ -56,6 +61,22 @@ REQUIRED_CASE_IDS = {
     "relationship-drift-between-stable-objects",
     "completed-collection-partial-control-coverage",
     "failed-assessment-cannot-pass",
+    "passing-assessment-without-basis",
+    "representation-content-and-reference",
+}
+REQUIRED_PACKAGE_CASE_IDS = {
+    "complete-coverage-missing-observation",
+    "complete-coverage-missing-target-accounting",
+    "success-with-failed-source-attempt",
+    "observation-run-mismatch",
+    "unresolved-envelope-observation-reference",
+    "unresolved-assessment-observation-reference",
+    "duplicate-coverage-target",
+    "coverage-target-overlap",
+    "observed-target-outside-requested-scope",
+    "unresolved-envelope-manifest-reference",
+    "unresolved-envelope-assessment-reference",
+    "assessment-observation-subject-mismatch",
 }
 EXPECTED_DIMENSIONS = {
     "environment": {
@@ -75,7 +96,8 @@ EXPECTED_DIMENSIONS = {
         "unchanged", "changed", "unknown", "not-assessed",
     },
     "trust": {
-        "acceptable-assertion", "warning", "error", "not-assessed",
+        "assertion-only", "receiver-verification-premise", "warning", "error",
+        "not-assessed",
     },
 }
 OPTIONAL_EXPECTED_DIMENSIONS = {
@@ -155,7 +177,7 @@ def validate_schema_fixtures(schemas: dict[str, dict[str, Any]]) -> dict[str, An
 
     loaded: dict[str, Any] = {}
     for path in valid_files:
-        kind = VALID_FIXTURES[path.name]
+        record_key, kind = VALID_FIXTURES[path.name]
         instance = load_json(path)
         errors = list(Draft202012Validator(
             schemas[kind], format_checker=format_checker
@@ -165,7 +187,21 @@ def validate_schema_fixtures(schemas: dict[str, dict[str, Any]]) -> dict[str, An
                 f"{path.relative_to(ROOT)}: expected valid, got "
                 + "; ".join(error.message for error in errors)
             )
-        loaded[kind] = instance
+        loaded[record_key] = instance
+
+    null_observation = loaded["observation-null-content"]
+    if "content" not in null_observation["representation"] or (
+        null_observation["representation"]["content"] is not None
+    ) or "reference" in null_observation["representation"]:
+        raise ValidationFailure("null-content fixture must express explicit null without a reference")
+    scoped_assessment = loaded["assessment-declared-scope"]
+    if (
+        scoped_assessment["executionStatus"] != "completed"
+        or scoped_assessment["outcome"] != "pass"
+        or scoped_assessment["inputBasis"]["kind"] != "declared-scope"
+        or scoped_assessment["controlCoverage"]["status"] == "unknown"
+    ):
+        raise ValidationFailure("declared-scope assessment fixture must declare a supported non-unknown basis")
 
     actual_invalid_names = {path.name for path in invalid_dir.glob("*.json")}
     if actual_invalid_names != set(INVALID_FIXTURES):
@@ -181,27 +217,185 @@ def validate_schema_fixtures(schemas: dict[str, dict[str, Any]]) -> dict[str, An
                 f"{path.relative_to(ROOT)}: expected schema rejection, but instance is valid"
             )
 
-    envelope = loaded["envelope"]
-    manifest = loaded["manifest"]
-    observation = loaded["observation"]
-    assessment = loaded["assessment"]
-    if envelope["manifestId"] != manifest["manifestId"]:
-        raise ValidationFailure("valid schema fixtures: envelope manifestId does not resolve")
-    if envelope["collectionRunId"] != manifest["collectionRunId"]:
-        raise ValidationFailure("valid schema fixtures: envelope and manifest run IDs differ")
-    if envelope["observationIds"] != [observation["observationId"]]:
-        raise ValidationFailure("valid schema fixtures: envelope observationIds do not resolve")
-    if envelope["assessmentIds"] != [assessment["assessmentId"]]:
-        raise ValidationFailure("valid schema fixtures: envelope assessmentIds do not resolve")
-    if assessment["observationReferences"] != [observation["observationId"]]:
-        raise ValidationFailure("valid schema fixtures: assessment observation reference does not resolve")
     return loaded
 
 
-def validate_cases() -> int:
+def target_key(target: dict[str, Any]) -> tuple[str, str, str]:
+    return target["authority"], target["scopeId"], target["nativeId"]
+
+
+def target_set(targets: list[dict[str, Any]], label: str) -> set[tuple[str, str, str]]:
+    keys = [target_key(target) for target in targets]
+    if len(keys) != len(set(keys)):
+        raise ValidationFailure(f"{label}: duplicate authority/scope/native target identity")
+    return set(keys)
+
+
+def validate_package(records: dict[str, Any]) -> None:
+    envelope = records["envelope"]
+    manifest = records["manifest"]
+    observations = [records["observation"]]
+    assessments = [records["assessment"]]
+
+    if envelope["manifestId"] != manifest["manifestId"]:
+        raise ValidationFailure("envelope manifestId does not resolve")
+    if envelope["collectionRunId"] != manifest["collectionRunId"]:
+        raise ValidationFailure("envelope and manifest run IDs differ")
+
+    observation_ids = {observation["observationId"] for observation in observations}
+    assessment_ids = {assessment["assessmentId"] for assessment in assessments}
+    if len(observation_ids) != len(observations) or len(assessment_ids) != len(assessments):
+        raise ValidationFailure("record identifiers must be unique within the package")
+    if set(envelope["observationIds"]) != observation_ids:
+        raise ValidationFailure("envelope observationIds do not resolve exactly to package observations")
+    if set(envelope["assessmentIds"]) != assessment_ids:
+        raise ValidationFailure("envelope assessmentIds do not resolve exactly to package assessments")
+
+    coverage = manifest["coverage"]
+    expected = target_set(coverage["expectedTargets"], "expectedTargets")
+    observed = target_set(coverage["observedTargets"], "observedTargets")
+    not_observed_targets = [item["target"] for item in coverage["notObserved"]]
+    not_observed = target_set(not_observed_targets, "notObserved")
+    if observed & not_observed:
+        raise ValidationFailure("a target cannot be both observed and notObserved")
+    if not (observed | not_observed) <= expected:
+        raise ValidationFailure("observed/notObserved targets must be members of expectedTargets")
+    if coverage["status"] == "complete" and (
+        observed != expected or not_observed
+    ):
+        raise ValidationFailure("complete coverage must observe every expected target")
+    if coverage["status"] == "partial" and observed | not_observed != expected:
+        raise ValidationFailure("partial coverage must account for every expected target")
+    if manifest["collectionStatus"] == "succeeded":
+        if coverage["status"] != "complete":
+            raise ValidationFailure("succeeded collection requires complete declared-scope coverage")
+        if any(attempt["status"] != "succeeded" for attempt in manifest["sourceAttempts"]):
+            raise ValidationFailure("succeeded collection cannot contain a non-succeeded source attempt")
+
+    observation_targets: set[tuple[str, str, str]] = set()
+    for observation in observations:
+        if observation["collectionRunId"] != manifest["collectionRunId"]:
+            raise ValidationFailure("observation collectionRunId does not match package manifest")
+        target = observation["target"]
+        if (
+            observation["source"]["authority"] != target["authority"]
+            or observation["source"]["scopeId"] != target["scopeId"]
+        ):
+            raise ValidationFailure("observation source authority/scope does not match its target")
+        observation_targets.add(target_key(target))
+    if observation_targets != observed:
+        raise ValidationFailure("manifest observedTargets do not match package observation targets")
+
+    observations_by_id = {observation["observationId"]: observation for observation in observations}
+    for assessment in assessments:
+        references = assessment["observationReferences"]
+        if any(reference not in observations_by_id for reference in references):
+            raise ValidationFailure("assessment observation reference does not resolve in package")
+        basis = assessment["inputBasis"]
+        if basis["kind"] == "observations":
+            if not references:
+                raise ValidationFailure("observation-based assessment must reference an observation")
+            subject = target_key(assessment["subject"])
+            if not any(
+                target_key(observations_by_id[reference]["target"]) == subject
+                for reference in references
+            ):
+                raise ValidationFailure("observation-based assessment has no subject-matching observation")
+        if basis["kind"] == "external-references" and not basis.get("externalReferences"):
+            raise ValidationFailure("external-reference assessment basis is empty")
+
+
+def validate_package_negative_cases(
+    cases: list[dict[str, Any]], records: dict[str, Any]
+) -> int:
+    if not isinstance(cases, list):
+        raise ValidationFailure("packageConsistencyCases must be an array")
+    identifiers = [case.get("id") for case in cases if isinstance(case, dict)]
+    if (
+        len(identifiers) != len(cases)
+        or len(set(identifiers)) != len(identifiers)
+        or set(identifiers) != REQUIRED_PACKAGE_CASE_IDS
+    ):
+        raise ValidationFailure("package consistency case inventory must have unique required IDs")
+
+    mutations = {
+        "clear-observed-targets": lambda package: package["manifest"]["coverage"].update(
+            observedTargets=[]
+        ),
+        "clear-observed-and-not-observed": lambda package: package["manifest"]["coverage"].update(
+            observedTargets=[], notObserved=[]
+        ),
+        "fail-source-attempt": lambda package: package["manifest"]["sourceAttempts"][0].update(
+            status="failed"
+        ),
+        "change-observation-run": lambda package: package["observation"].update(
+            collectionRunId="urn:example:other-run"
+        ),
+        "reference-missing-observation": lambda package: package["envelope"].update(
+            observationIds=["urn:example:missing-observation"]
+        ),
+        "reference-missing-assessment-observation": lambda package: package["assessment"].update(
+            observationReferences=["urn:example:missing-observation"]
+        ),
+        "reference-missing-manifest": lambda package: package["envelope"].update(
+            manifestId="urn:example:missing-manifest"
+        ),
+        "reference-missing-assessment": lambda package: package["envelope"].update(
+            assessmentIds=["urn:example:missing-assessment"]
+        ),
+        "assessment-subject-mismatch": lambda package: package["assessment"]["subject"].update(
+            nativeId="synthetic-other-object"
+        ),
+        "duplicate-expected-target": lambda package: package["manifest"]["coverage"][
+            "expectedTargets"
+        ].append(dict(package["manifest"]["coverage"]["expectedTargets"][0], displayName="duplicate")),
+        "overlap-observed-and-not-observed": lambda package: package["manifest"]["coverage"][
+            "notObserved"
+        ].append({
+            "target": dict(package["manifest"]["coverage"]["observedTargets"][0]),
+            "reason": "unknown",
+        }),
+        "add-observed-target-outside-requested-scope": lambda package: package["manifest"][
+            "coverage"
+        ]["observedTargets"].append({
+            "authority": "urn:example:source-authority",
+            "scopeId": "synthetic-workspace",
+            "nativeId": "unexpected-target",
+        }),
+    }
+    for case in cases:
+        if (
+            case.get("expected") != "reject"
+            or not isinstance(case.get("rationale"), str)
+            or not case["rationale"].strip()
+            or case.get("mutation") not in mutations
+        ):
+            raise ValidationFailure(f"{case.get('id')}: malformed package consistency case")
+        mutated = copy.deepcopy(records)
+        mutations[case["mutation"]](mutated)
+        try:
+            validate_package(mutated)
+        except ValidationFailure:
+            continue
+        raise ValidationFailure(f"{case['id']}: invalid package mutation was accepted")
+    return len(cases)
+
+
+def validate_cases(records: dict[str, Any]) -> tuple[int, int]:
     case_set = load_json(CASE_FILE)
     if case_set.get("caseSetVersion") != "0.1" or case_set.get("schemaSetVersion") != "0.1":
         raise ValidationFailure("cases.json must declare caseSetVersion and schemaSetVersion 0.1")
+    layers = case_set.get("conformanceLayers")
+    required_layers = {
+        "schemaFixtures",
+        "packageConsistency",
+        "semanticExpectations",
+        "behavioralImplementationTests",
+    }
+    if not isinstance(layers, dict) or set(layers) != required_layers or any(
+        not isinstance(value, str) or not value.strip() for value in layers.values()
+    ):
+        raise ValidationFailure("cases.json must declare all four conformance layers")
     spec_link = case_set.get("architectureSpecification", "")
     if not spec_link.endswith("/specifications/evidence-envelope-v0.1.md"):
         raise ValidationFailure("cases.json must link to the authoritative architecture specification")
@@ -223,6 +417,13 @@ def validate_cases() -> int:
             raise ValidationFailure(f"{case['id']}: missing scenario description")
         if not isinstance(case.get("rationale"), str) or not case["rationale"].strip():
             raise ValidationFailure(f"{case['id']}: missing rationale")
+        if case.get("vectorKind") != "semantic-expectation-only":
+            raise ValidationFailure(f"{case['id']}: semantic expectations must not be presented as executed vectors")
+        preconditions = case.get("preconditions")
+        if not isinstance(preconditions, dict) or set(preconditions) != {
+            "scope", "collection", "identity", "representation", "freshness", "trust"
+        } or any(not isinstance(value, str) or not value.strip() for value in preconditions.values()):
+            raise ValidationFailure(f"{case['id']}: complete declared preconditions are required")
         inputs = case.get("inputs")
         if not isinstance(inputs, dict) or not inputs:
             raise ValidationFailure(f"{case['id']}: missing synthetic inputs")
@@ -233,6 +434,24 @@ def validate_cases() -> int:
             if expected.get(dimension) not in permitted:
                 raise ValidationFailure(
                     f"{case['id']}: missing or invalid expected {dimension} outcome"
+                )
+        if expected["environment"] in {"drift", "no-drift"}:
+            comparison_context = inputs.get("comparisonContext")
+            trust_premise = (
+                comparison_context.get("receiverVerificationPremise")
+                if isinstance(comparison_context, dict)
+                else None
+            )
+            if (
+                expected["trust"] != "receiver-verification-premise"
+                or not isinstance(trust_premise, dict)
+                or trust_premise.get("status") != "stipulated-success"
+                or not trust_premise.get("policy")
+                or not trust_premise.get("appliesTo")
+                or not trust_premise.get("note")
+            ):
+                raise ValidationFailure(
+                    f"{case['id']}: environmental conclusion requires an explicit receiver-trust premise"
                 )
         for dimension, permitted in OPTIONAL_EXPECTED_DIMENSIONS.items():
             if dimension in expected and expected[dimension] not in permitted:
@@ -260,7 +479,11 @@ def validate_cases() -> int:
             safe_repo_path(fixture_name, CASE_FILE.parent)
     if referenced_invalid != set(INVALID_FIXTURES):
         raise ValidationFailure("every deliberately-invalid schema fixture must be referenced by a case")
-    return len(cases)
+    validate_package(records)
+    package_case_count = validate_package_negative_cases(
+        case_set.get("packageConsistencyCases", []), records
+    )
+    return len(cases), package_case_count
 
 
 def repository_text_files() -> list[Path]:
@@ -320,7 +543,7 @@ def main() -> int:
             )
         schemas = validate_schemas()
         validate_schema_fixtures(schemas)
-        case_count = validate_cases()
+        case_count, package_case_count = validate_cases(validate_schema_fixtures(schemas))
         validate_docs_and_text()
     except (
         ValidationFailure,
@@ -333,8 +556,9 @@ def main() -> int:
 
     print(
         f"schema and fixture-data checks passed: {len(schemas)} schemas, "
-        f"{len(SCHEMAS)} valid fixtures, {len(INVALID_FIXTURES)} expected-invalid "
-        f"fixtures, {case_count} semantic expectation cases."
+        f"{len(VALID_FIXTURES)} valid fixtures, {len(INVALID_FIXTURES)} expected-invalid "
+        f"fixtures, {package_case_count} package-consistency rejection cases, "
+        f"{case_count} semantic expectation cases."
     )
     print("No semantic comparison, digest verification, or source-truth test was executed.")
     return 0

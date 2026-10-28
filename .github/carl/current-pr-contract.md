@@ -2,18 +2,21 @@
 
 ## Contract status
 
-Closed as submitted for review: https://github.com/evaxis/evaxis/pull/1.
-The user authorized schemas, synthetic conformance fixtures, validation-only
-tooling, local validation, commits, pushes and PR creation. This PR contains a
-**proposal pending architectural/maintainer review**, not an approved contract
-or implemented comparison behavior. Do not merge it.
+Active review-revision scope for https://github.com/evaxis/evaxis/pull/1.
+The user requests cross-PR corrections before merge; keep the PR open and the
+schema/fixture contract proposed. Tighten producer trust claims, coverage and
+package consistency, assessment input basis, representation exclusivity, and
+the distinction between schema fixtures, package checks, semantic expectations
+and future behavior tests. Keep architecture PR #3 aligned.
 
 ## Goal and approved scope
 
-Add modular v0.1 JSON Schemas, synthetic valid and adversarial fixture data,
-machine-readable expected outcomes and minimal validation-only tooling.
-Architecture owns semantics; this repository owns schema structure and fixture
-data. Update relevant docs/memory, validate, commit and open a linked PR.
+Revise the four v0.1 JSON Schemas and minimal validator so producer trust
+statements remain claims, contradictory coverage/source-attempt combinations
+and unresolved package references are rejected, and passing assessments
+declare a valid basis. Add adversarial consistency cases and accurate
+validation-layer documentation. Architecture owns semantics; this repository
+owns schema structure and fixture data.
 
 ## Non-goals and forbidden scope
 
@@ -60,5 +63,6 @@ never merge or bypass protection.
 
 ## Carry-forward and reset
 
-After PR creation, close this contract as submitted for review, not approved.
-Preserve schema-to-architecture authority and version alignment in memory.
+After the revision is pushed and PR checks verified, close this contract as
+submitted for review, not approved. Preserve schema-to-architecture authority
+and version alignment in memory.

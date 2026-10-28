@@ -100,30 +100,38 @@
     "integrity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status"],
+      "description": "Producer-supplied integrity assertions only; these fields do not establish receiver verification.",
+      "required": ["claimStatus"],
       "properties": {
-        "status": {
-          "enum": ["not-provided", "not-verified", "verified", "invalid", "untrusted"]
+        "claimStatus": {
+          "enum": [
+            "no-claim",
+            "claims-not-verified",
+            "claims-verified",
+            "claims-invalid",
+            "claims-untrusted"
+          ]
         },
         "digest": {
           "$ref": "#/$defs/digest"
         },
-        "verification": {
+        "verificationClaim": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["verifier", "verifiedAt", "method"],
+          "description": "Unverified producer assertion about a verification event; consumers must not treat it as an established result.",
+          "required": ["claimedVerifier", "claimedAt", "claimedMethod"],
           "properties": {
-            "verifier": {
+            "claimedVerifier": {
               "$ref": "#/$defs/identifier"
             },
-            "verifiedAt": {
+            "claimedAt": {
               "type": "string",
               "format": "date-time"
             },
-            "method": {
+            "claimedMethod": {
               "$ref": "#/$defs/identifier"
             },
-            "trustContext": {
+            "claimedTrustContext": {
               "$ref": "#/$defs/identifier"
             }
           }
@@ -139,13 +147,13 @@
           "if": {
             "properties": {
               "status": {
-                "const": "verified"
+                "const": "claims-verified"
               }
             },
-            "required": ["status"]
+            "required": ["claimStatus"]
           },
           "then": {
-            "required": ["verification"]
+            "required": ["verificationClaim"]
           }
         }
       ]

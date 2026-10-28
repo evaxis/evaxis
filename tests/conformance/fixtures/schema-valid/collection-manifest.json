@@ -6,7 +6,7 @@
     "authority": "urn:example:collector-authority",
     "id": "synthetic-collector",
     "version": "0.1.0",
-    "identityStatus": "asserted"
+    "identityClaimStatus": "asserted"
   },
   "startedAt": "2026-01-02T03:00:00Z",
   "completedAt": "2026-01-02T03:04:00Z",

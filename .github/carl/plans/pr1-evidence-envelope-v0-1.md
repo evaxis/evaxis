@@ -2,7 +2,7 @@
 
 ## Plan metadata
 - PR / branch: core PR #1 / `spec/evidence-envelope-v0.1`
-- Status: Submitted for review; proposal pending explicit architectural approval
+- Status: Active review revision; proposal pending explicit architectural approval
 - Author: Copilot
 - Created: 2026-10-28
 - Last updated: 2026-10-28
@@ -40,8 +40,10 @@ status until architectural approval and version alignment are recorded.
 
 ## Intentional contract amendments
 
-None. The user explicitly authorizes schemas, synthetic fixtures, validation
-tooling and PR publication; no product runtime implementation is authorized.
+The cross-PR review requests explicit producer-claim semantics, coverage and
+package consistency invariants, more defensible semantic expectations, and an
+assessment input basis. Revisions remain within the authorized schema and
+validation-only scope; no product runtime implementation is authorized.
 
 ## Goal
 
@@ -70,6 +72,10 @@ workflow.
   architecture source.
 - Validate schemas, fixtures, cross-references, compatibility/version
   metadata, required expected results, links, whitespace and secret patterns.
+- Validate coverage target partitions, source-attempt status, package references,
+  run membership and passing-assessment input basis with explicit negative cases.
+- Distinguish structural fixtures, package consistency checks, compact semantic
+  expectations with preconditions, and deferred behavioral implementation tests.
 - Commit on a feature branch, push and open a linked review PR; do not merge.
 
 ## Forbidden scope

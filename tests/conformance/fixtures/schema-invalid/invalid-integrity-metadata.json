@@ -13,11 +13,9 @@
   "observationIds": [],
   "assessmentIds": [],
   "integrity": {
-    "status": "verified",
-    "digest": {
-      "algorithm": "urn:example:digest:illustrative",
-      "value": "synthetic-not-cryptographic",
-      "covers": "synthetic-payload-placeholder"
+    "claimStatus": "claims-verified",
+    "verificationClaim": {
+      "claimedAt": "2026-01-02T03:04:05Z"
     }
   }
 }

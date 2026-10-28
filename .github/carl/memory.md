@@ -22,8 +22,10 @@ Reference this URL; do not generate or commit replacement artwork.
 - `examples/{complete-assessment,incomplete-collection,environment-drift,evaluator-drift}/`:
   reserved scenario directories, without findings or example data.
 - `tests/conformance/`: synthetic schema fixtures and machine-readable
-  semantic expectations; validation checks data consistency, not comparison
-  behavior.
+  semantic expectations; validation checks individual shape and the linked
+  package's reference/coverage consistency, not comparison behavior. Producer
+  verification/authentication fields remain claims until a separate receiver-
+  owned verification record exists.
 - `https://github.com/evaxis/architecture`: architectural records and roadmap.
 - `https://github.com/evaxis/.github`: shared community governance and profile.
 
@@ -44,7 +46,9 @@ These are repository-specific canonical invariants, supplementing the bundled
    preferred directions, not implemented controls or selected algorithms.
 5. Evidence integrity: design for immutable evidence, provenance, source and
    collector identity, collection timestamps, completeness, freshness and replay
-   protection. Do not claim these properties are already implemented.
+   protection. Producer-supplied authentication/integrity fields are claims,
+   never receiver-established trust. Do not claim these properties are already
+   implemented.
 6. Semantic correctness: distinguish environmental drift from schema,
    collection, identity-resolution and evaluation changes.
 7. Contract ownership: architecture owns Evidence Envelope terminology,

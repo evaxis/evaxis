@@ -15,6 +15,7 @@
     "executionStatus",
     "outcome",
     "observationReferences",
+    "inputBasis",
     "controlCoverage"
   ],
   "properties": {
@@ -49,6 +50,53 @@
       "items": {
         "$ref": "#/$defs/identifier"
       }
+    },
+    "inputBasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Explicit declared basis for this assessment; it remains a producer assertion until independently evaluated.",
+      "required": ["kind", "rationale"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "observations",
+            "declared-scope",
+            "external-references",
+            "no-input"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "externalReferences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "external-references"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["externalReferences"],
+            "properties": {
+              "externalReferences": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "normalizationModel": {
       "$ref": "#/$defs/versionedIdentity"
@@ -162,6 +210,28 @@
     {
       "if": {
         "properties": {
+          "inputBasis": {
+            "properties": {
+              "kind": {
+                "const": "observations"
+              }
+            },
+            "required": ["kind"]
+          }
+        },
+        "required": ["inputBasis"]
+      },
+      "then": {
+        "properties": {
+          "observationReferences": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "executionStatus": {
             "enum": ["failed", "unsupported", "not-run"]
           }
@@ -175,6 +245,42 @@
           }
         },
         "required": ["outcome"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "executionStatus": {
+            "const": "completed"
+          },
+          "outcome": {
+            "enum": ["pass", "fail"]
+          }
+        },
+        "required": ["executionStatus", "outcome"]
+      },
+      "then": {
+        "properties": {
+          "controlCoverage": {
+            "properties": {
+              "status": {
+                "enum": ["complete", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "inputBasis": {
+            "properties": {
+              "kind": {
+                "not": {
+                  "const": "no-input"
+                }
+              }
+            },
+            "required": ["kind"]
+          }
+        },
+        "required": ["inputBasis"]
       }
     }
   ]

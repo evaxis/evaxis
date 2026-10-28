@@ -21,6 +21,10 @@
   "executionStatus": "completed",
   "outcome": "pass",
   "observationReferences": ["urn:example:observation:001"],
+  "inputBasis": {
+    "kind": "observations",
+    "rationale": "Synthetic rule uses the explicitly referenced observation."
+  },
   "freshness": {
     "status": "unknown"
   },

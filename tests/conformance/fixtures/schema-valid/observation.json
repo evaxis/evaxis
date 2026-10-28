@@ -28,7 +28,7 @@
     "authority": "urn:example:collector-authority",
     "id": "synthetic-collector",
     "version": "0.1.0",
-    "identityStatus": "asserted"
+    "identityClaimStatus": "claims-authenticated"
   },
   "representation": {
     "encoding": "json",
