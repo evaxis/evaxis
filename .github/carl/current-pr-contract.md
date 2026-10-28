@@ -2,10 +2,11 @@
 
 ## Contract status
 
-Active. The user authorized schemas, synthetic conformance fixtures,
-validation-only tooling, local validation, commits, pushes and PR creation.
-This PR contains a **proposal pending architectural/maintainer review**, not an
-approved contract or implemented comparison behavior. Do not merge it.
+Closed as submitted for review: https://github.com/evaxis/evaxis/pull/1.
+The user authorized schemas, synthetic conformance fixtures, validation-only
+tooling, local validation, commits, pushes and PR creation. This PR contains a
+**proposal pending architectural/maintainer review**, not an approved contract
+or implemented comparison behavior. Do not merge it.
 
 ## Goal and approved scope
 
