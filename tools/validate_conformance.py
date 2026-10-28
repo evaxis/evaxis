@@ -27,7 +27,7 @@ CASE_FILE = ROOT / "tests/conformance/cases.json"
 INVALID_FIXTURES = {
     "malformed-envelope.json": "envelope",
     "missing-collection-timestamp.json": "manifest",
-    "invalid-integrity-metadata.json": "envelope",
+    "claims-verified-without-verification-claim.json": "envelope",
     "failed-assessment-pass.json": "assessment",
     "passing-assessment-without-basis.json": "assessment",
     "representation-content-and-reference.json": "observation",
@@ -215,6 +215,43 @@ def validate_schema_fixtures(schemas: dict[str, dict[str, Any]]) -> dict[str, An
         if not errors:
             raise ValidationFailure(
                 f"{path.relative_to(ROOT)}: expected schema rejection, but instance is valid"
+            )
+        if filename == "claims-verified-without-verification-claim.json" and not any(
+            error.validator == "required"
+            and list(error.path) == ["integrity"]
+            and "verificationClaim" in error.message
+            for error in errors
+        ):
+            raise ValidationFailure(
+                f"{path.relative_to(ROOT)}: rejection must require verificationClaim"
+            )
+
+    valid_integrity = loaded["envelope"].get("integrity", {})
+    if (
+        valid_integrity.get("claimStatus") != "claims-verified"
+        or not isinstance(valid_integrity.get("verificationClaim"), dict)
+    ):
+        raise ValidationFailure(
+            "schema-valid envelope must demonstrate claims-verified with verificationClaim"
+        )
+    integrity_schema = schemas["envelope"]["$defs"]["integrity"]
+    integrity_validator = Draft202012Validator(
+        integrity_schema, format_checker=format_checker
+    )
+    for claim_status in integrity_schema["properties"]["claimStatus"]["enum"]:
+        integrity = {"claimStatus": claim_status}
+        errors = list(integrity_validator.iter_errors(integrity))
+        if claim_status == "claims-verified" and not any(
+            error.validator == "required"
+            and "verificationClaim" in error.message
+            for error in errors
+        ):
+            raise ValidationFailure(
+                "claims-verified integrity without verificationClaim must be rejected"
+            )
+        if claim_status != "claims-verified" and errors:
+            raise ValidationFailure(
+                f"{claim_status} integrity must not require verificationClaim"
             )
 
     return loaded

@@ -6,8 +6,10 @@ owns normative semantics. Conformance data is split into four layers:
 1. `fixtures/schema-valid/` and `fixtures/schema-invalid/` contain complete
    individual records for structural validation, including a positive explicit
    JSON-null representation case, an explicit declared-scope assessment basis,
-   and a negative conflicting content/reference case. Invalid examples are
-   expected rejections.
+   and negative conflicting content/reference and `claims-verified` without
+   `verificationClaim` cases. Invalid examples are expected rejections. The
+   validator also checks that a valid `claims-verified` claim with metadata
+   passes and other permitted claim statuses do not require that metadata.
 2. Those valid records form one linked synthetic package; package checks resolve
    envelope and assessment references, verify run membership, and enforce
    coverage/source-attempt consistency, target uniqueness, partitioning and

@@ -733,7 +733,7 @@
       "id": "invalid-integrity-metadata",
       "scenario": "An envelope claims verified integrity without verifier, time or method metadata.",
       "inputs": {
-        "schemaFixture": "fixtures/schema-invalid/invalid-integrity-metadata.json"
+        "schemaFixture": "fixtures/schema-invalid/claims-verified-without-verification-claim.json"
       },
       "expected": {
         "environment": "not-assessed",

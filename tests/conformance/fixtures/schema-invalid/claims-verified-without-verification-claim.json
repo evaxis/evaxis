@@ -1,21 +1,18 @@
 {
   "contractVersion": "0.1",
-  "envelopeId": "urn:example:invalid-envelope:integrity",
+  "envelopeId": "urn:example:invalid-envelope:verified-claim-without-metadata",
   "producer": {
     "authority": "urn:example:collector-authority",
     "id": "synthetic-collector",
     "version": "0.1.0",
     "role": "collector"
   },
-  "collectionRunId": "urn:example:run:integrity",
+  "collectionRunId": "urn:example:run:verified-claim",
   "createdAt": "2026-01-02T03:04:05Z",
-  "manifestId": "urn:example:manifest:integrity",
+  "manifestId": "urn:example:manifest:verified-claim",
   "observationIds": [],
   "assessmentIds": [],
   "integrity": {
-    "claimStatus": "claims-verified",
-    "verificationClaim": {
-      "claimedAt": "2026-01-02T03:04:05Z"
-    }
+    "claimStatus": "claims-verified"
   }
 }

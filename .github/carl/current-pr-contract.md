@@ -2,12 +2,30 @@
 
 ## Contract status
 
-Closed — submitted for review, not approved. The proposal remains open for
-maintainer review at https://github.com/evaxis/evaxis/pull/1. The cross-PR
-revisions tighten producer trust claims, coverage and package consistency,
-assessment input basis, representation exclusivity, and the distinction
-between schema fixtures, package checks, semantic expectations and future
-behavior tests. Architecture PR #3 remains the semantic authority.
+Active targeted remediation for https://github.com/evaxis/evaxis/pull/1.
+Correct the integrity conditional to test `claimStatus`, add a complete
+otherwise-valid negative envelope with `claims-verified` but no
+`verificationClaim`, and prove all other allowed statuses remain valid without
+verification metadata. Keep producer assertions distinct from receiver trust.
+
+## Scope and invariants
+
+Use the existing Core PR #1 branch and conformance validator. Preserve the
+four-record contract and Architecture PR #3 as the human-semantic authority.
+Do not redesign schemas, alter Architecture PR #3 absent a normative
+inconsistency, add a test framework, implement verification/comparison, or
+select product technology. Keep the existing PR open and do not merge.
+
+## Acceptance and validation
+
+The regression fixture must fail specifically because `verificationClaim` is
+required when `claimStatus` is `claims-verified`; the valid envelope must
+demonstrate a structurally valid verification claim. Validate every other
+permitted integrity claim status without verification metadata. Run the full
+existing schema/fixture/package/semantic-data validator, cARL diagnostics,
+whitespace and credential-pattern checks, and applicable PR governance CI.
+Schema validity does not establish authenticity, trust, truthfulness or
+comparison correctness.
 
 ## Goal and approved scope
 
