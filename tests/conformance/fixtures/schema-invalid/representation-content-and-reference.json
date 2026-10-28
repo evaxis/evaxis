@@ -1,0 +1,35 @@
+{
+  "observationId": "urn:example:invalid-observation:two-representations",
+  "contractVersion": "0.1",
+  "collectionRunId": "urn:example:run:invalid-representation",
+  "observedAt": "2026-01-02T03:03:00Z",
+  "source": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace"
+  },
+  "target": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace",
+    "nativeId": "synthetic-object-001",
+    "lifecycle": {
+      "state": "active",
+      "basis": "direct-observation"
+    }
+  },
+  "observationType": "configuration",
+  "observationSchema": {
+    "id": "urn:example:schema:policy",
+    "version": "1"
+  },
+  "collector": {
+    "authority": "urn:example:collector-authority",
+    "id": "synthetic-collector",
+    "version": "0.1.0",
+    "identityClaimStatus": "asserted"
+  },
+  "representation": {
+    "encoding": "json",
+    "content": null,
+    "reference": "synthetic://evidence/payload"
+  }
+}

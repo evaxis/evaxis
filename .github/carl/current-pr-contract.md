@@ -1,65 +1,88 @@
-# Initial core foundations contract
+# PR #1: Evidence Envelope v0.1 machine-readable proposal
 
 ## Contract status
 
-Closed for initial file preparation: local governance, links, workflow syntax
-and credential-pattern validation passed. Publication and security-setting
-verification remain bootstrap operations reported separately. This historical
-contract does not authorise future product implementation.
+Closed — submitted for review, not approved. Targeted remediation is published
+on the existing Core PR #1 branch:
+https://github.com/evaxis/evaxis/pull/1. The integrity conditional tests
+`claimStatus`; a complete negative envelope omits `verificationClaim` while
+claiming `claims-verified`; validation confirms all other allowed statuses
+remain valid without verification metadata. Producer assertions remain
+distinct from receiver trust.
+
+## Scope and invariants
+
+Use the existing Core PR #1 branch and conformance validator. Preserve the
+four-record contract and Architecture PR #3 as the human-semantic authority.
+Do not redesign schemas, alter Architecture PR #3 absent a normative
+inconsistency, add a test framework, implement verification/comparison, or
+select product technology. Keep the existing PR open and do not merge.
+
+## Acceptance and validation
+
+The regression fixture must fail specifically because `verificationClaim` is
+required when `claimStatus` is `claims-verified`; the valid envelope must
+demonstrate a structurally valid verification claim. Validate every other
+permitted integrity claim status without verification metadata. Run the full
+existing schema/fixture/package/semantic-data validator, cARL diagnostics,
+whitespace and credential-pattern checks, and applicable PR governance CI.
+Schema validity does not establish authenticity, trust, truthfulness or
+comparison correctness.
 
 ## Goal and approved scope
 
-Prepare the future independent Evaxis core with cARL from its first commit,
-documentation and explicitly unimplemented contract/scenario directories.
-Tier 1 scoped file writes and Tier 2 governance/API writes are approved only for
-the three named Evaxis repositories. No harness authority changes are approved.
-
-## Plan and expected files
-
-1. Inspect existing state; initialise cARL and activate the foundations profile.
-2. Populate `.github/carl/memory.md` with independence and assurance invariants.
-3. Add `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `CODEOWNERS`,
-   `THIRD_PARTY_NOTICES.md`, `docs/getting-started.md`, README-only placeholders
-   under `schemas/`, `examples/`, `tests/conformance/`, and governance CI.
-4. Validate locally, make the first commit, push to empty `main`.
-5. Apply supported security settings and verify remote state.
+Revise the four v0.1 JSON Schemas and minimal validator so producer trust
+statements remain claims, contradictory coverage/source-attempt combinations
+and unresolved package references are rejected, and passing assessments
+declare a valid basis. Add adversarial consistency cases and accurate
+validation-layer documentation. Architecture owns semantics; this repository
+owns schema structure and fixture data.
 
 ## Non-goals and forbidden scope
 
-No evidence processing, storage, drift logic, authentication, billing, hosting,
-fictional schemas/findings/tests, stack/cloud/backend choice, licensing terms,
-paid resources, releases, other projects, replacement logo or invented HTML.
-No force pushes, deletion, bypassed reviews, auto-merge, weakened protections,
-workflow administration tokens or committed secrets.
+No semantic comparison engine, collection/runtime/API/storage, provider/cloud,
+product language, authentication, signature verification, encryption,
+cryptographic algorithm/key custody, retention, licensing, billing or
+Maester-specific implementation. No CI workflow, cARL runtime/selection/
+profiles/invariants/adapters, protection or unrelated repository changes.
 
-## Architectural and security constraints
+## Plan and expected files
 
-Preserve `memory.md` invariants and trust boundaries, plus bundled policy.
-Maester remains a proposed integration, never the core's execution/storage
-foundation. Keep managed cARL files canonical and local policy in memory.
-No public visibility claim implies open-source licensing.
+Follow `.github/carl/plans/pr1-evidence-envelope-v0-1.md`. Expected files:
+the plan and contract; `.github/carl/memory.md`; `README.md`; the four existing
+schema READMEs and versioned schema files under
+`schemas/{evidence,observations,assessments,manifests}/`;
+`tests/conformance/README.md`, `cases.json`, separate synthetic valid/invalid
+schema fixtures; `tools/validate_conformance.py`; and `requirements-dev.txt`
+only if necessary.
 
 ## Contract assertions and validation
 
-1. The remote initial commit includes cARL and all required documentation:
-   inspect history and Git tree.
-2. `carl doctor`, `status`, `pack effective`, `trace`, `harness status` pass;
-   only core governance and CI/CD packs are effective.
-3. All planned directories are labelled unimplemented; no product code,
-   schemas, customer data or provider contracts exist.
-4. Local links, remote links and the canonical avatar resolve.
-5. Staged whitespace/credential checks and real cARL CI pass; read back GitHub
-   security/protection settings and report limitations rather than fake success.
+1. Envelope, collection manifest, observation and assessment are distinct
+   contracts with distinct schema/collector/rule/evaluator/comparison versions.
+2. Missing, partial, failed, unsupported, stale, malformed or untrusted inputs
+   remain distinct from control Pass/Fail, confirmed deletion and remediation.
+3. Schema validity does not establish semantics, authenticity, freshness,
+   completeness or source truth; expected comparison outcomes are machine
+   readable but are not executed.
+4. Every required scenario has a unique identifier, resolvable fixture,
+   expected outcome and rationale; expected-invalid fixtures are handled as
+   successful negative validation cases.
+5. Run schema syntax/meta-validation, fixture validation/expected rejection,
+   cross-reference/version/expected-result checks, documentation-link,
+   whitespace and credential-pattern checks; run cARL diagnostics in both
+   repositories.
 
-## Risks, stop conditions and escalation
+## Constraints and stop conditions
 
-Stop the affected operation on unexpected existing content, permissions failure
-or policy conflicts. Escalate reserved technical/commercial decisions.
-Avoid sole-maintainer lockout: require PRs but not impossible self-approval.
-Never grant automation a bypass or weaken settings to make checks succeed.
+Follow the scoped plan; keep all examples synthetic; do not select product
+technology, provider, cryptography, licensing or retention. Stop if schema
+meanings are not in the architecture proposal, if CI or product code is
+required, or if conflicting edits/policy are found. Use feature branch and PR;
+never merge or bypass protection.
 
-## Carry-forward and context reset
+## Carry-forward and reset
 
-Only stable memory/invariants carry forward. Subsequent changes require feature
-branches and PRs. Close this bootstrap contract after local preparation and
-validation; replace it with explicit approved scope before new work.
+After the revision is pushed and PR checks verified, close this contract as
+submitted for review, not approved. Preserve schema-to-architecture authority
+and version alignment in memory.

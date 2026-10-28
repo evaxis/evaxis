@@ -15,10 +15,17 @@ Reference this URL; do not generate or commit replacement artwork.
 ## Repository map
 
 - `docs/getting-started.md`: design-stage orientation, not installation.
-- `schemas/{evidence,observations,assessments,manifests}/`: planned contracts.
+- `schemas/{evidence,observations,assessments,manifests}/`: proposed modular
+  Evidence Envelope v0.1 schemas; the architecture repository's
+  `specifications/evidence-envelope-v0.1.md` owns human semantics, while this
+  repository owns schema structure.
 - `examples/{complete-assessment,incomplete-collection,environment-drift,evaluator-drift}/`:
   reserved scenario directories, without findings or example data.
-- `tests/conformance/`: planned assertions, no test implementation.
+- `tests/conformance/`: synthetic schema fixtures and machine-readable
+  semantic expectations; validation checks individual shape and the linked
+  package's reference/coverage consistency, not comparison behavior. Producer
+  verification/authentication fields remain claims until a separate receiver-
+  owned verification record exists.
 - `https://github.com/evaxis/architecture`: architectural records and roadmap.
 - `https://github.com/evaxis/.github`: shared community governance and profile.
 
@@ -39,24 +46,31 @@ These are repository-specific canonical invariants, supplementing the bundled
    preferred directions, not implemented controls or selected algorithms.
 5. Evidence integrity: design for immutable evidence, provenance, source and
    collector identity, collection timestamps, completeness, freshness and replay
-   protection. Do not claim these properties are already implemented.
+   protection. Producer-supplied authentication/integrity fields are claims,
+   never receiver-established trust. Do not claim these properties are already
+   implemented.
 6. Semantic correctness: distinguish environmental drift from schema,
    collection, identity-resolution and evaluation changes.
-7. Commercial independence: useful baseline functionality should remain
+7. Contract ownership: architecture owns Evidence Envelope terminology,
+   semantics, lifecycle, threat limits and compatibility decisions; this
+   repository owns versioned machine-readable schemas and synthetic fixtures.
+   Keep both aligned on explicit contract version `0.1`; do not duplicate or
+   silently redefine normative meanings here.
+8. Commercial independence: useful baseline functionality should remain
    accessible without a hosted paid service. Premium entitlements must not
    become inseparably coupled to a storage provider.
-8. Maester separation: Maester Packs and Maester Cloud Plugins are proposed
+9. Maester separation: Maester Packs and Maester Cloud Plugins are proposed
    integrations, not execution or storage foundations. Their provider APIs,
    structured evidence storage, licensing and revenue sharing are not contracts.
-9. No speculative commitments: do not select implementation languages, build
+10. No speculative commitments: do not select implementation languages, build
    systems, databases, clouds, cryptographic algorithms or commercial terms.
    Mark claims Confirmed, Proposed or Undecided.
-10. Licensing is undecided. Public visibility is not an open-source licence.
+11. Licensing is undecided. Public visibility is not an open-source licence.
     No root LICENSE or substantial product implementation before approval.
     Upstream cARL retains its own licence in `THIRD_PARTY_NOTICES.md`.
-11. No secrets, customer evidence, tenant identifiers or sensitive findings in
+12. No secrets, customer evidence, tenant identifiers or sensitive findings in
     public files, issues, fixtures, logs or pull requests.
-12. Use pull requests after the initial bootstrap. Never bypass reviews, enable
+13. Use pull requests after the initial bootstrap. Never bypass reviews, enable
     auto-merge, force-push, delete protected branches or weaken protections to
     make automation succeed. Never modify unrelated organisations or projects.
 
@@ -73,6 +87,7 @@ These supplement `.github/carl/trust-boundaries.md`.
 | Sensitive report into public discussion | Use private vulnerability reporting; never publish customer evidence or credentials. |
 | Future source/collector into evidence | Define identity, provenance, timestamps, completeness, freshness and replay validation before accepting trust claims. |
 | Future evidence into evaluator/comparison | Preserve schema, collection, identity-resolution and evaluator context; incomplete collection must not imply compliance or environmental drift. |
+| Architecture semantics into core schema | Treat architecture as the sole human-semantic authority and core schemas/fixtures as machine-readable structure/expectations; align explicit contract versions and review changes in both repositories. |
 | Future tenant into storage/key/execution context | Specify authorization, per-customer isolation and key ownership; interchangeable adapters must not erase trust assumptions. |
 | Future Maester integration into core | Keep provider APIs and entitlements outside independent evidence and comparison contracts; no implicit trust from publisher identity. |
 
@@ -101,8 +116,10 @@ JFrog Boost must exclude `.github/carl/**` from optimisation.
 
 ## Proposed next milestone and open decisions
 
-Next: specify the Evaxis Evidence Envelope, then approve synthetic conformance
-fixtures. No fictional schemas, findings or test implementations at bootstrap.
+Next: review and explicitly approve the proposed Evaxis Evidence Envelope v0.1
+and linked core schemas/fixtures. The current schema-validation tooling checks
+structure and fixture-data consistency only; it is not a comparison engine and
+does not verify semantic expectations.
 Licensing, contribution rights, execution model, storage adapters, identity,
 cryptographic design, commercial entitlements and all provider contracts remain
 undecided. No partnerships, affiliations or endorsements are established.

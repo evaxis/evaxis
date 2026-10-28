@@ -1,0 +1,42 @@
+{
+  "assessmentId": "urn:example:assessment:001",
+  "contractVersion": "0.1",
+  "subject": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace",
+    "nativeId": "synthetic-object-001",
+    "displayName": "Synthetic policy"
+  },
+  "rule": {
+    "authority": "urn:example:rule-authority",
+    "id": "synthetic-rule",
+    "version": "1"
+  },
+  "evaluator": {
+    "authority": "urn:example:evaluator-authority",
+    "id": "synthetic-evaluator",
+    "version": "0.1.0"
+  },
+  "assessedAt": "2026-01-02T03:05:00Z",
+  "executionStatus": "completed",
+  "outcome": "pass",
+  "observationReferences": ["urn:example:observation:001"],
+  "inputBasis": {
+    "kind": "observations",
+    "rationale": "Synthetic rule uses the explicitly referenced observation."
+  },
+  "freshness": {
+    "status": "unknown"
+  },
+  "controlCoverage": {
+    "status": "complete",
+    "assessedSubjects": [
+      {
+        "authority": "urn:example:source-authority",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-object-001"
+      }
+    ],
+    "unassessedSubjects": []
+  }
+}

@@ -37,9 +37,16 @@ and [initial threat-model scope](https://github.com/evaxis/architecture/blob/mai
 
 | Path | Status |
 |---|---|
-| `schemas/evidence/`, `observations/`, `assessments/`, `manifests/` | Planned contracts awaiting specification; no schemas |
-| `examples/` | Reserved assessment, incomplete-collection and drift scenarios; no example findings |
-| `tests/conformance/` | Planned conformance work; no test implementation |
+| `schemas/{evidence,observations,assessments,manifests}/` | Proposed modular Evidence Envelope v0.1 JSON Schemas; pending architecture review |
+| `tests/conformance/` | Structural fixtures, package-consistency rejection cases, and semantic expectations with preconditions; no comparison engine |
+| `tools/validate_conformance.py` | Validation-only tooling; not a product runtime or comparison engine |
+
+The [human-semantic Evidence Envelope v0.1 proposal](https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md)
+is authoritative for terminology and intended meaning. This repository owns
+machine-readable structure and synthetic conformance data. Both remain
+proposals until reviewed and explicitly approved; the contract version is
+`0.1`. Producer-supplied integrity/authentication fields are claims, not
+receiver-established trust. See [validation instructions](tests/conformance/README.md).
 
 Start with [design-stage orientation](docs/getting-started.md).
 The [architecture repository](https://github.com/evaxis/architecture) records

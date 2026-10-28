@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evaxis:schema:assessment-result:0.1",
+  "title": "Evaxis Assessment Result v0.1",
+  "description": "Evaluator interpretation of explicitly referenced observations; not an observation or collection result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessmentId",
+    "contractVersion",
+    "subject",
+    "rule",
+    "evaluator",
+    "assessedAt",
+    "executionStatus",
+    "outcome",
+    "observationReferences",
+    "inputBasis",
+    "controlCoverage"
+  ],
+  "properties": {
+    "assessmentId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "contractVersion": {
+      "const": "0.1"
+    },
+    "subject": {
+      "$ref": "#/$defs/target"
+    },
+    "rule": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "evaluator": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "assessedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "executionStatus": {
+      "enum": ["completed", "failed", "unsupported", "not-run"]
+    },
+    "outcome": {
+      "enum": ["pass", "fail", "unknown"]
+    },
+    "observationReferences": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "inputBasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Explicit declared basis for this assessment; it remains a producer assertion until independently evaluated.",
+      "required": ["kind", "rationale"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "observations",
+            "declared-scope",
+            "external-references",
+            "no-input"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "externalReferences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "external-references"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["externalReferences"],
+            "properties": {
+              "externalReferences": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "normalizationModel": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "comparisonModel": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["fresh", "stale", "unknown"]
+        },
+        "evaluatedAgainstTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "policy": {
+          "$ref": "#/$defs/identifier"
+        },
+        "clockBasis": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "controlCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "assessedSubjects", "unassessedSubjects"],
+      "properties": {
+        "status": {
+          "enum": ["complete", "partial", "unknown"]
+        },
+        "assessedSubjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/target"
+          }
+        },
+        "unassessedSubjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target", "reason"],
+            "properties": {
+              "target": {
+                "$ref": "#/$defs/target"
+              },
+              "reason": {
+                "enum": ["missing-evidence", "stale-evidence", "unsupported", "failed", "out-of-scope", "unknown"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "versionedIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "id", "version"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "scopeId", "nativeId"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "scopeId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "nativeId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "inputBasis": {
+            "properties": {
+              "kind": {
+                "const": "observations"
+              }
+            },
+            "required": ["kind"]
+          }
+        },
+        "required": ["inputBasis"]
+      },
+      "then": {
+        "properties": {
+          "observationReferences": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "executionStatus": {
+            "enum": ["failed", "unsupported", "not-run"]
+          }
+        },
+        "required": ["executionStatus"]
+      },
+      "then": {
+        "properties": {
+          "outcome": {
+            "const": "unknown"
+          }
+        },
+        "required": ["outcome"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "executionStatus": {
+            "const": "completed"
+          },
+          "outcome": {
+            "enum": ["pass", "fail"]
+          }
+        },
+        "required": ["executionStatus", "outcome"]
+      },
+      "then": {
+        "properties": {
+          "controlCoverage": {
+            "properties": {
+              "status": {
+                "enum": ["complete", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "inputBasis": {
+            "properties": {
+              "kind": {
+                "not": {
+                  "const": "no-input"
+                }
+              }
+            },
+            "required": ["kind"]
+          }
+        },
+        "required": ["inputBasis"]
+      }
+    }
+  ]
+}

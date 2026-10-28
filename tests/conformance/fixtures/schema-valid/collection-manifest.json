@@ -1,0 +1,45 @@
+{
+  "manifestId": "urn:example:manifest:001",
+  "contractVersion": "0.1",
+  "collectionRunId": "urn:example:run:001",
+  "collector": {
+    "authority": "urn:example:collector-authority",
+    "id": "synthetic-collector",
+    "version": "0.1.0",
+    "identityClaimStatus": "asserted"
+  },
+  "startedAt": "2026-01-02T03:00:00Z",
+  "completedAt": "2026-01-02T03:04:00Z",
+  "collectionStatus": "succeeded",
+  "requestedScope": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace",
+    "scopeType": "workspace"
+  },
+  "sourceAttempts": [
+    {
+      "authority": "urn:example:source-authority",
+      "status": "succeeded",
+      "startedAt": "2026-01-02T03:00:01Z",
+      "completedAt": "2026-01-02T03:03:59Z"
+    }
+  ],
+  "coverage": {
+    "status": "complete",
+    "expectedTargets": [
+      {
+        "authority": "urn:example:source-authority",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-object-001"
+      }
+    ],
+    "observedTargets": [
+      {
+        "authority": "urn:example:source-authority",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-object-001"
+      }
+    ],
+    "notObserved": []
+  }
+}

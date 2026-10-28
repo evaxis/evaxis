@@ -1,0 +1,38 @@
+{
+  "assessmentId": "urn:example:assessment:declared-scope",
+  "contractVersion": "0.1",
+  "subject": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace",
+    "nativeId": "synthetic-object-scope"
+  },
+  "rule": {
+    "authority": "urn:example:rule-authority",
+    "id": "synthetic-scope-rule",
+    "version": "1"
+  },
+  "evaluator": {
+    "authority": "urn:example:evaluator-authority",
+    "id": "synthetic-evaluator",
+    "version": "0.1.0"
+  },
+  "assessedAt": "2026-01-02T03:05:00Z",
+  "executionStatus": "completed",
+  "outcome": "pass",
+  "observationReferences": [],
+  "inputBasis": {
+    "kind": "declared-scope",
+    "rationale": "This synthetic rule evaluates only the explicitly declared scope, not observation payloads."
+  },
+  "controlCoverage": {
+    "status": "complete",
+    "assessedSubjects": [
+      {
+        "authority": "urn:example:source-authority",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-object-scope"
+      }
+    ],
+    "unassessedSubjects": []
+  }
+}

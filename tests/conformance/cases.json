@@ -1,0 +1,967 @@
+{
+  "caseSetVersion": "0.1",
+  "schemaSetVersion": "0.1",
+  "architectureSpecification": "https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md",
+  "conformanceLayers": {
+    "schemaFixtures": "Complete individual records validated against their declared JSON Schemas.",
+    "packageConsistency": "The linked valid record fixtures are checked together for package references, run membership, and collection coverage invariants; negative mutations assert rejection.",
+    "semanticExpectations": "Compact synthetic expectations with declared preconditions; these are not complete schema-valid package vectors and are not executed by a comparison engine.",
+    "behavioralImplementationTests": "Deferred until an independently reviewed comparison implementation exists."
+  },
+  "packageConsistencyCases": [
+    {
+      "id": "complete-coverage-missing-observation",
+      "mutation": "clear-observed-targets",
+      "expected": "reject",
+      "rationale": "Complete coverage cannot omit a target in the requested target set."
+    },
+    {
+      "id": "complete-coverage-missing-target-accounting",
+      "mutation": "clear-observed-and-not-observed",
+      "expected": "reject",
+      "rationale": "Every expected target must be accounted for as observed or not observed."
+    },
+    {
+      "id": "success-with-failed-source-attempt",
+      "mutation": "fail-source-attempt",
+      "expected": "reject",
+      "rationale": "A successful run cannot contain a failed or unavailable source attempt."
+    },
+    {
+      "id": "observation-run-mismatch",
+      "mutation": "change-observation-run",
+      "expected": "reject",
+      "rationale": "An observation in the package must belong to its manifest and envelope collection run."
+    },
+    {
+      "id": "unresolved-envelope-observation-reference",
+      "mutation": "reference-missing-observation",
+      "expected": "reject",
+      "rationale": "Every envelope observation reference must resolve to exactly one package observation."
+    },
+    {
+      "id": "unresolved-assessment-observation-reference",
+      "mutation": "reference-missing-assessment-observation",
+      "expected": "reject",
+      "rationale": "Every assessment observation reference must resolve to a package observation."
+    },
+    {
+      "id": "duplicate-coverage-target",
+      "mutation": "duplicate-expected-target",
+      "expected": "reject",
+      "rationale": "Target identity keys must be unique even if repeated entries differ in display attributes."
+    },
+    {
+      "id": "coverage-target-overlap",
+      "mutation": "overlap-observed-and-not-observed",
+      "expected": "reject",
+      "rationale": "A target cannot simultaneously be reported observed and not observed."
+    },
+    {
+      "id": "observed-target-outside-requested-scope",
+      "mutation": "add-observed-target-outside-requested-scope",
+      "expected": "reject",
+      "rationale": "An observed target must belong to the manifest's declared expected target set."
+    },
+    {
+      "id": "unresolved-envelope-manifest-reference",
+      "mutation": "reference-missing-manifest",
+      "expected": "reject",
+      "rationale": "The envelope's manifest identifier must resolve within the package."
+    },
+    {
+      "id": "unresolved-envelope-assessment-reference",
+      "mutation": "reference-missing-assessment",
+      "expected": "reject",
+      "rationale": "Every envelope assessment reference must resolve to a package assessment."
+    },
+    {
+      "id": "assessment-observation-subject-mismatch",
+      "mutation": "assessment-subject-mismatch",
+      "expected": "reject",
+      "rationale": "An observation-based assessment must reference an observation for its assessed subject."
+    }
+  ],
+  "cases": [
+    {
+      "id": "identical-observations-across-runs",
+      "scenario": "Two runs report the same source-authority, scope, native target, schema and captured value.",
+      "inputs": {
+        "comparisonContext": {
+          "scope": "scope-a",
+          "collectionCompleteness": "complete-for-declared-target",
+          "freshnessPolicy": "synthetic-policy-1",
+          "freshnessResult": "fresh",
+          "integrity": "producer-assertions-only; source truth not established",
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        },
+        "observations": [
+          {
+            "run": "run-a",
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "schema": "policy/1",
+            "value": {
+              "setting": "enabled"
+            }
+          },
+          {
+            "run": "run-b",
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "schema": "policy/1",
+            "value": {
+              "setting": "enabled"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "receiver-verification-premise",
+        "result": "no-observed-drift-within-declared-scope"
+      },
+      "rationale": "Equal comparable observations support no observed value drift only within the declared target and collection scope; they do not prove complete environment immutability.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is assumed only where the scenario supplies stable authority, scope, and native identity; this does not assert a global identifier guarantee.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "changed-configuration-same-pass",
+      "scenario": "A configuration value changes while both assessment results remain Pass under the same rule and evaluator versions.",
+      "inputs": {
+        "observations": [
+          {
+            "run": "run-a",
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "schema": "policy/1",
+            "value": {
+              "setting": "enabled"
+            }
+          },
+          {
+            "run": "run-b",
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "schema": "policy/1",
+            "value": {
+              "setting": "disabled"
+            }
+          }
+        ],
+        "assessments": [
+          {
+            "ruleVersion": "1",
+            "evaluatorVersion": "1",
+            "outcomes": [
+              "pass",
+              "pass"
+            ]
+          }
+        ],
+        "comparisonContext": {
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        }
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "unchanged",
+        "trust": "receiver-verification-premise",
+        "result": "environment-drift-outcome-unchanged"
+      },
+      "rationale": "A passing outcome is not evidence that the underlying captured configuration remained unchanged.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is assumed only where the scenario supplies stable authority, scope, and native identity; this does not assert a global identifier guarantee.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "same-evidence-stricter-evaluator",
+      "scenario": "The same observation is evaluated under a changed rule version; the stricter rule returns Fail.",
+      "inputs": {
+        "observations": [
+          {
+            "run": "run-a",
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "schema": "policy/1",
+            "value": {
+              "setting": "enabled"
+            }
+          }
+        ],
+        "assessments": [
+          {
+            "ruleVersion": "1",
+            "evaluatorVersion": "1",
+            "outcome": "pass"
+          },
+          {
+            "ruleVersion": "2",
+            "evaluatorVersion": "1",
+            "outcome": "fail"
+          }
+        ],
+        "comparisonContext": {
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        }
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "changed",
+        "trust": "receiver-verification-premise",
+        "result": "evaluation-drift-not-environmental-drift"
+      },
+      "rationale": "Unchanged evidence with changed rule context is an evaluation change, not environmental drift.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is assumed only where the scenario supplies stable authority, scope, and native identity; this does not assert a global identifier guarantee.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "missing-target-partial-collection",
+      "scenario": "A target is expected but absent from a partial collection with a recorded visibility limitation.",
+      "inputs": {
+        "manifest": {
+          "status": "partial",
+          "scope": "scope-a",
+          "expectedTargets": [
+            "object-a"
+          ],
+          "observedTargets": [],
+          "notObservedReason": "denied"
+        }
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "incomplete",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "unknown-continuity-not-deletion"
+      },
+      "rationale": "Absence from partial or denied visibility cannot establish deletion, compliance or remediation.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: incomplete. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is unknown unless the scenario supplies stronger identity and lifecycle evidence.",
+        "representation": "Expected representation classification: not-assessed. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "confirmed-deletion",
+      "scenario": "The source provides a deletion event/tombstone for a previously observed authority-qualified object.",
+      "inputs": {
+        "lifecycle": {
+          "state": "deletion-confirmed",
+          "basis": "source-tombstone",
+          "evidenceReference": "synthetic-tombstone-1"
+        }
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "changed",
+        "representation": "comparable",
+        "identity": "deleted",
+        "evaluation": "not-assessed",
+        "trust": "assertion-only",
+        "result": "confirmed-lifecycle-change"
+      },
+      "rationale": "Deletion is represented only from positive source-attributable lifecycle evidence, not non-observation.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: changed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Deletion requires the positive source-attributable lifecycle evidence named in the scenario.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "same-display-name-new-native-identity",
+      "scenario": "Two objects share a display name but have different native IDs under the same source authority and scope.",
+      "inputs": {
+        "targets": [
+          {
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-old",
+            "displayName": "Policy"
+          },
+          {
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-new",
+            "displayName": "Policy"
+          }
+        ]
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "stable",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "assertion-only",
+        "result": "distinct-identity-continuity-unproven"
+      },
+      "rationale": "A matching mutable display name does not establish object continuity.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Distinct native identities do not by themselves prove replacement or lifecycle continuity.",
+        "representation": "Expected representation classification: not-assessed. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "renamed-object-stable-native-identity",
+      "scenario": "Display name changes while authority, scope and native ID remain stable.",
+      "inputs": {
+        "targets": [
+          {
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "displayName": "Old name"
+          },
+          {
+            "authority": "source-a",
+            "scope": "scope-a",
+            "nativeId": "object-a",
+            "displayName": "New name"
+          }
+        ],
+        "comparisonContext": {
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        }
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "receiver-verification-premise",
+        "result": "same-object-attribute-change"
+      },
+      "rationale": "Stable authority-scoped native identity supports continuity while the renamed display attribute remains a captured change.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is assumed only where the scenario supplies stable authority, scope, and native identity; this does not assert a global identifier guarantee.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "same-value-incompatible-schema-meanings",
+      "scenario": "Two schema versions expose the same JSON value but define the field with incompatible semantics.",
+      "inputs": {
+        "comparisonContext": {
+          "scope": "scope-a",
+          "collectionCompleteness": "complete-for-declared-target",
+          "freshnessPolicy": "synthetic-policy-1",
+          "freshnessResult": "fresh",
+          "identityCorrelation": {
+            "status": "correlated",
+            "basis": "explicit synthetic mapping between the same authority-scoped target"
+          }
+        },
+        "observations": [
+          {
+            "schema": "policy/1",
+            "value": {
+              "mode": "1"
+            }
+          },
+          {
+            "schema": "policy/2",
+            "value": {
+              "mode": "1"
+            }
+          }
+        ],
+        "schemaSemantics": "incompatible"
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "stable",
+        "representation": "incompatible",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "assertion-only",
+        "result": "incomparable-not-equal"
+      },
+      "rationale": "Structural equality of values does not establish semantic compatibility across different field meanings.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "The input comparison context supplies a synthetic correlated identity for the same authority-scoped target; the correlation is a case premise, not independently verified evidence.",
+        "representation": "Expected representation classification: incompatible. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "equivalent-representation-with-documented-transformation",
+      "scenario": "Equivalent source meanings use different representations and a named/versioned, lineage-preserving transformation is available.",
+      "inputs": {
+        "comparisonContext": {
+          "scope": "scope-a",
+          "collectionCompleteness": "complete-for-declared-target",
+          "freshnessPolicy": "synthetic-policy-1",
+          "freshnessResult": "fresh",
+          "identityCorrelation": {
+            "status": "correlated",
+            "basis": "explicit synthetic mapping between the same authority-scoped target"
+          },
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        },
+        "observations": [
+          {
+            "schema": "policy/1",
+            "value": {
+              "enabled": true
+            }
+          },
+          {
+            "schema": "policy/2",
+            "value": {
+              "state": "active"
+            }
+          }
+        ],
+        "transformation": {
+          "id": "synthetic-policy-map",
+          "version": "1",
+          "sourceSchema": "policy/1",
+          "targetSchema": "policy/2",
+          "preservesOriginals": true,
+          "mappings": [
+            {
+              "fromPath": "/enabled",
+              "fromValue": true,
+              "toPath": "/state",
+              "toValue": "active",
+              "equivalenceBasis": "Synthetic source contracts policy-source/1 and policy-source/2 define enabled=true and state=active as equivalent."
+            }
+          ],
+          "lineageReferences": [
+            "synthetic-observation-a",
+            "synthetic-observation-b"
+          ],
+          "approvalStatus": "illustrative-not-independently-verified",
+          "contractReferences": [
+            "synthetic-contract:policy-source/1",
+            "synthetic-contract:policy-source/2"
+          ]
+        }
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "transformation-required",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "receiver-verification-premise",
+        "result": "comparable-after-documented-transformation"
+      },
+      "rationale": "Representation changes are comparable only through an explicitly identified transformation with preserved originals and lineage.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "The declared synthetic correlation links the inputs within the same authority and scope; its basis is illustrative and not independently verified.",
+        "representation": "Expected representation classification: transformation-required. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "malformed-envelope",
+      "scenario": "An envelope omits its required producer identity.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/malformed-envelope.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "schema-validation-rejected"
+      },
+      "rationale": "Malformed records are rejected explicitly and cannot produce a security assessment.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: not-assessed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: invalid. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "missing-collection-timestamp",
+      "scenario": "A collection manifest omits its required collection start timestamp.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/missing-collection-timestamp.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "invalid",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "schema-validation-rejected"
+      },
+      "rationale": "A missing collection timestamp is a contract validation error, not a current observation or successful collection.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: invalid. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: invalid. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "duplicate-envelope-submission",
+      "scenario": "The same producer-scoped envelope ID and immutable content are submitted twice.",
+      "inputs": {
+        "producerAuthority": "collector-a",
+        "envelopeId": "envelope-a",
+        "sameContent": true,
+        "submissionCount": 2
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "comparable",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "assertion-only",
+        "ingestion": "idempotent-duplicate",
+        "result": "acknowledge-without-overwrite"
+      },
+      "rationale": "An exact duplicate under the same producer authority and ID is idempotent; same-ID different-content is a conflict.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: not-assessed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "replayed-older-evidence",
+      "scenario": "An older envelope is resubmitted after newer evidence; source sequence and receiver policy are available but do not prove malicious intent.",
+      "inputs": {
+        "olderCollectionTime": "2026-01-01T00:00:00Z",
+        "newerCollectionTime": "2026-01-02T00:00:00Z",
+        "sourceSequence": "synthetic-sequence"
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "changed",
+        "representation": "comparable",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "ingestion": "replay-or-backfill-review",
+        "result": "freshness-warning-not-proof-of-malice"
+      },
+      "rationale": "Older evidence can be delayed backfill or replay; warn or reject only under an explicit receiver policy and preserve original time.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: changed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is unknown unless the scenario supplies stronger identity and lifecycle evidence.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "reduced-scope-between-runs",
+      "scenario": "A later collection requests a narrower scope and omits targets included in the prior scope.",
+      "inputs": {
+        "scopes": [
+          {
+            "scopeId": "scope-a",
+            "expectedTargets": [
+              "object-a",
+              "object-b"
+            ]
+          },
+          {
+            "scopeId": "scope-a",
+            "expectedTargets": [
+              "object-a"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "changed",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "coverage-change-not-remediation"
+      },
+      "rationale": "A reduced requested scope is a collection/coverage change and says nothing about excluded targets' current state.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: changed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is unknown unless the scenario supplies stronger identity and lifecycle evidence.",
+        "representation": "Expected representation classification: not-assessed. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "collector-failure",
+      "scenario": "The collector records a failed source attempt and no observation for the requested target.",
+      "inputs": {
+        "manifest": {
+          "status": "failed",
+          "sourceAttemptStatus": "unavailable",
+          "expectedTargets": [
+            "object-a"
+          ],
+          "observedTargets": []
+        }
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "failed",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "collector-error-not-control-failure"
+      },
+      "rationale": "Collector/source failure is an acquisition error; it is not evidence that a control failed.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: failed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is unknown unless the scenario supplies stronger identity and lifecycle evidence.",
+        "representation": "Expected representation classification: not-assessed. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "invalid-integrity-metadata",
+      "scenario": "An envelope claims verified integrity without verifier, time or method metadata.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/claims-verified-without-verification-claim.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "integrity-claim-rejected"
+      },
+      "rationale": "A verification claim without verification context is structurally rejected; digest presence alone does not establish authenticity.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: not-assessed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: invalid. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "unknown-rule-version",
+      "scenario": "The evidence is available, but the consumer does not recognize the assessment's rule version.",
+      "inputs": {
+        "assessment": {
+          "ruleId": "synthetic-rule",
+          "ruleVersion": "unknown-version",
+          "outcome": "pass"
+        },
+        "recognizedRuleVersions": [
+          "1"
+        ]
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "unknown",
+        "evaluation": "unknown",
+        "trust": "warning",
+        "result": "no-fabricated-assessment-equivalence"
+      },
+      "rationale": "Outcome labels alone cannot equate unknown rule semantics to a known rule version.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is unknown unless the scenario supplies stronger identity and lifecycle evidence.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "relationship-drift-between-stable-objects",
+      "scenario": "Two endpoint objects keep stable authority, scope and native IDs while their observed relationship changes.",
+      "inputs": {
+        "relationships": [
+          {
+            "sourceNativeId": "object-a",
+            "type": "member-of",
+            "targetNativeId": "object-b"
+          },
+          {
+            "sourceNativeId": "object-a",
+            "type": "member-of",
+            "targetNativeId": "object-c"
+          }
+        ],
+        "comparisonContext": {
+          "receiverVerificationPremise": {
+            "status": "stipulated-success",
+            "policy": "synthetic-trust-policy-1",
+            "appliesTo": "all source observations and collection manifests used by this case",
+            "note": "case precondition only; the fixture validator performs no verification"
+          }
+        }
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "receiver-verification-premise",
+        "result": "relationship-drift"
+      },
+      "rationale": "Relationships are independently observed evidence and can drift while both endpoint identities remain stable.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Continuity is assumed only where the scenario supplies stable authority, scope, and native identity; this does not assert a global identifier guarantee.",
+        "representation": "Expected representation classification: comparable. Structural equality alone is not semantic compatibility.",
+        "freshness": "All observations used meet an explicitly declared synthetic freshness policy; timestamps and source attribution are usable for this scenario.",
+        "trust": "The case stipulates receiver verification success for the exact evidence under the named synthetic policy; this is a scenario premise only, not a result established by schema or fixture validation."
+      }
+    },
+    {
+      "id": "completed-collection-partial-control-coverage",
+      "scenario": "The collection successfully completes the entire declared source scope, while an assessment evaluates only some relevant subjects.",
+      "inputs": {
+        "manifest": {
+          "collectionStatus": "succeeded",
+          "coverage": {
+            "status": "complete",
+            "expectedTargets": [
+              "object-a",
+              "object-b"
+            ],
+            "observedTargets": [
+              "object-a",
+              "object-b"
+            ]
+          }
+        },
+        "assessment": {
+          "executionStatus": "completed",
+          "controlCoverage": {
+            "status": "partial",
+            "assessedSubjects": [
+              "object-a"
+            ],
+            "unassessedSubjects": [
+              "object-b"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "stable",
+        "representation": "not-assessed",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "assertion-only",
+        "coverage": "partial",
+        "result": "collection-complete-control-coverage-partial"
+      },
+      "rationale": "A successful, complete collection run does not imply that every relevant control subject was assessed.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: stable. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: not-assessed. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "failed-assessment-cannot-pass",
+      "scenario": "An evaluator failure is presented with a passing outcome.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/failed-assessment-pass.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "unknown",
+        "trust": "error",
+        "result": "failed-evaluation-cannot-be-control-pass"
+      },
+      "rationale": "An unsuccessful evaluation cannot produce a security Pass; it must remain an explicit execution error/unknown.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the sources, targets, and scope explicitly listed in inputs are considered; no whole-environment completeness is implied.",
+        "collection": "Expected collection classification: not-assessed. Any stronger completeness assumption is stated in the scenario.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "Expected representation classification: invalid. Structural equality alone is not semantic compatibility.",
+        "freshness": "No freshness assurance is inferred beyond the facts explicitly stated in this scenario.",
+        "trust": "All producer-supplied provenance, authentication, and integrity statements are unverified assertions; synthetic premises do not establish platform trust."
+      }
+    },
+    {
+      "id": "passing-assessment-without-basis",
+      "scenario": "A completed passing assessment has no referenced evidence, declares no-input, and reports unknown control coverage.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/passing-assessment-without-basis.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "unknown",
+        "trust": "error",
+        "result": "pass-rejected-without-explicit-supported-basis"
+      },
+      "rationale": "A completed Pass cannot rely on no input or unknown control coverage; the record is explicitly rejected rather than accepted as an unsupported conclusion.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the assessment record's declared subject is in scope.",
+        "collection": "No collection evidence is provided.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "The assessment record is structurally invalid under the declared completed-result invariants.",
+        "freshness": "Freshness is not assessed because the assessment has no valid basis.",
+        "trust": "Producer-supplied provenance and outcome claims are not independently established."
+      }
+    },
+    {
+      "id": "representation-content-and-reference",
+      "scenario": "An observation declares both inline content and an external reference as its representation.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/representation-content-and-reference.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "representation-ambiguity-rejected"
+      },
+      "rationale": "The captured representation must have one authoritative source; explicit null content is valid, but content and reference together are ambiguous.",
+      "vectorKind": "semantic-expectation-only",
+      "preconditions": {
+        "scope": "Only the observation record is in scope.",
+        "collection": "Collection status is not assessed because the record is invalid.",
+        "identity": "Identity is outside the conclusion for this scenario.",
+        "representation": "The record violates the exactly-one-of content/reference schema constraint.",
+        "freshness": "Freshness is not assessed because the representation is invalid.",
+        "trust": "Producer-supplied claims are not independently established."
+      }
+    }
+  ]
+}
