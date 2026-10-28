@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evaxis:schema:evidence-envelope:0.1",
+  "title": "Evaxis Evidence Envelope v0.1",
+  "description": "Portable package index. Human semantics are owned by evaxis/architecture/specifications/evidence-envelope-v0.1.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "envelopeId",
+    "producer",
+    "collectionRunId",
+    "createdAt",
+    "manifestId",
+    "observationIds",
+    "assessmentIds"
+  ],
+  "properties": {
+    "contractVersion": {
+      "const": "0.1"
+    },
+    "envelopeId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "id", "version", "role"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "role": {
+          "enum": ["collector", "assessor", "packager", "adapter"]
+        }
+      }
+    },
+    "collectionRunId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "manifestId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "observationIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "assessmentIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "integrity": {
+      "$ref": "#/$defs/integrity"
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Namespaced non-normative producer metadata; consumers preserve unknown entries.",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value", "covers"],
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/identifier"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "covers": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["not-provided", "not-verified", "verified", "invalid", "untrusted"]
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verifier", "verifiedAt", "method"],
+          "properties": {
+            "verifier": {
+              "$ref": "#/$defs/identifier"
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "method": {
+              "$ref": "#/$defs/identifier"
+            },
+            "trustContext": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        "signatureMetadata": {
+          "type": "object",
+          "description": "Opaque, optional metadata; this schema does not select or verify a signature scheme.",
+          "additionalProperties": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "verified"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["verification"]
+          }
+        }
+      ]
+    }
+  }
+}

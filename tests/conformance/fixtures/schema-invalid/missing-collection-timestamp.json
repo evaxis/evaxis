@@ -1,0 +1,28 @@
+{
+  "manifestId": "urn:example:manifest:missing-start",
+  "contractVersion": "0.1",
+  "collectionRunId": "urn:example:run:missing-start",
+  "collector": {
+    "authority": "urn:example:collector-authority",
+    "id": "synthetic-collector",
+    "version": "0.1.0",
+    "identityStatus": "asserted"
+  },
+  "collectionStatus": "failed",
+  "requestedScope": {
+    "authority": "urn:example:source-authority",
+    "scopeId": "synthetic-workspace"
+  },
+  "sourceAttempts": [
+    {
+      "authority": "urn:example:source-authority",
+      "status": "failed"
+    }
+  ],
+  "coverage": {
+    "status": "unknown",
+    "expectedTargets": [],
+    "observedTargets": [],
+    "notObserved": []
+  }
+}

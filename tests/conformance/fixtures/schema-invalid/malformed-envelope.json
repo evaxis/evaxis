@@ -1,0 +1,9 @@
+{
+  "contractVersion": "0.1",
+  "envelopeId": "urn:example:invalid-envelope:missing-producer",
+  "collectionRunId": "urn:example:run:invalid",
+  "createdAt": "2026-01-02T03:04:05Z",
+  "manifestId": "urn:example:manifest:invalid",
+  "observationIds": [],
+  "assessmentIds": []
+}

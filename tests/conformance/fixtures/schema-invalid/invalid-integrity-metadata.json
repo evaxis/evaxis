@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.1",
+  "envelopeId": "urn:example:invalid-envelope:integrity",
+  "producer": {
+    "authority": "urn:example:collector-authority",
+    "id": "synthetic-collector",
+    "version": "0.1.0",
+    "role": "collector"
+  },
+  "collectionRunId": "urn:example:run:integrity",
+  "createdAt": "2026-01-02T03:04:05Z",
+  "manifestId": "urn:example:manifest:integrity",
+  "observationIds": [],
+  "assessmentIds": [],
+  "integrity": {
+    "status": "verified",
+    "digest": {
+      "algorithm": "urn:example:digest:illustrative",
+      "value": "synthetic-not-cryptographic",
+      "covers": "synthetic-payload-placeholder"
+    }
+  }
+}

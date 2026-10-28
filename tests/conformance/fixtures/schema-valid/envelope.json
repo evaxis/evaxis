@@ -1,0 +1,15 @@
+{
+  "contractVersion": "0.1",
+  "envelopeId": "urn:example:envelope:run-001",
+  "producer": {
+    "authority": "urn:example:collector-authority",
+    "id": "synthetic-collector",
+    "version": "0.1.0",
+    "role": "collector"
+  },
+  "collectionRunId": "urn:example:run:001",
+  "createdAt": "2026-01-02T03:04:05Z",
+  "manifestId": "urn:example:manifest:001",
+  "observationIds": ["urn:example:observation:001"],
+  "assessmentIds": ["urn:example:assessment:001"]
+}

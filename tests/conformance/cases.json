@@ -1,0 +1,385 @@
+{
+  "caseSetVersion": "0.1",
+  "schemaSetVersion": "0.1",
+  "architectureSpecification": "https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md",
+  "cases": [
+    {
+      "id": "identical-observations-across-runs",
+      "scenario": "Two runs report the same source-authority, scope, native target, schema and captured value.",
+      "inputs": {
+        "observations": [
+          {"run": "run-a", "authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "schema": "policy/1", "value": {"setting": "enabled"}},
+          {"run": "run-b", "authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "schema": "policy/1", "value": {"setting": "enabled"}}
+        ]
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "no-environmental-drift"
+      },
+      "rationale": "Equal comparable observations support no observed value drift only within the declared target and collection scope; they do not prove complete environment immutability."
+    },
+    {
+      "id": "changed-configuration-same-pass",
+      "scenario": "A configuration value changes while both assessment results remain Pass under the same rule and evaluator versions.",
+      "inputs": {
+        "observations": [
+          {"run": "run-a", "authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "schema": "policy/1", "value": {"setting": "enabled"}},
+          {"run": "run-b", "authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "schema": "policy/1", "value": {"setting": "disabled"}}
+        ],
+        "assessments": [{"ruleVersion": "1", "evaluatorVersion": "1", "outcomes": ["pass", "pass"]}]
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "unchanged",
+        "trust": "acceptable-assertion",
+        "result": "environment-drift-outcome-unchanged"
+      },
+      "rationale": "A passing outcome is not evidence that the underlying captured configuration remained unchanged."
+    },
+    {
+      "id": "same-evidence-stricter-evaluator",
+      "scenario": "The same observation is evaluated under a changed rule version; the stricter rule returns Fail.",
+      "inputs": {
+        "observations": [{"run": "run-a", "authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "schema": "policy/1", "value": {"setting": "enabled"}}],
+        "assessments": [{"ruleVersion": "1", "evaluatorVersion": "1", "outcome": "pass"}, {"ruleVersion": "2", "evaluatorVersion": "1", "outcome": "fail"}]
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "changed",
+        "trust": "acceptable-assertion",
+        "result": "evaluation-drift-not-environmental-drift"
+      },
+      "rationale": "Unchanged evidence with changed rule context is an evaluation change, not environmental drift."
+    },
+    {
+      "id": "missing-target-partial-collection",
+      "scenario": "A target is expected but absent from a partial collection with a recorded visibility limitation.",
+      "inputs": {
+        "manifest": {"status": "partial", "scope": "scope-a", "expectedTargets": ["object-a"], "observedTargets": [], "notObservedReason": "denied"}
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "incomplete",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "unknown-continuity-not-deletion"
+      },
+      "rationale": "Absence from partial or denied visibility cannot establish deletion, compliance or remediation."
+    },
+    {
+      "id": "confirmed-deletion",
+      "scenario": "The source provides a deletion event/tombstone for a previously observed authority-qualified object.",
+      "inputs": {
+        "lifecycle": {"state": "deletion-confirmed", "basis": "source-tombstone", "evidenceReference": "synthetic-tombstone-1"}
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "changed",
+        "representation": "comparable",
+        "identity": "deleted",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "confirmed-lifecycle-change"
+      },
+      "rationale": "Deletion is represented only from positive source-attributable lifecycle evidence, not non-observation."
+    },
+    {
+      "id": "same-display-name-new-native-identity",
+      "scenario": "Two objects share a display name but have different native IDs under the same source authority and scope.",
+      "inputs": {
+        "targets": [
+          {"authority": "source-a", "scope": "scope-a", "nativeId": "object-old", "displayName": "Policy"},
+          {"authority": "source-a", "scope": "scope-a", "nativeId": "object-new", "displayName": "Policy"}
+        ]
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "stable",
+        "representation": "not-assessed",
+        "identity": "replacement",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "not-continuous-by-name"
+      },
+      "rationale": "A matching mutable display name does not establish object continuity."
+    },
+    {
+      "id": "renamed-object-stable-native-identity",
+      "scenario": "Display name changes while authority, scope and native ID remain stable.",
+      "inputs": {
+        "targets": [
+          {"authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "displayName": "Old name"},
+          {"authority": "source-a", "scope": "scope-a", "nativeId": "object-a", "displayName": "New name"}
+        ]
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "same-object-attribute-change"
+      },
+      "rationale": "Stable authority-scoped native identity supports continuity while the renamed display attribute remains a captured change."
+    },
+    {
+      "id": "same-value-incompatible-schema-meanings",
+      "scenario": "Two schema versions expose the same JSON value but define the field with incompatible semantics.",
+      "inputs": {
+        "observations": [
+          {"schema": "policy/1", "value": {"mode": "1"}},
+          {"schema": "policy/2", "value": {"mode": "1"}}
+        ],
+        "schemaSemantics": "incompatible"
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "stable",
+        "representation": "incompatible",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "incomparable-not-equal"
+      },
+      "rationale": "Structural equality of values does not establish semantic compatibility across different field meanings."
+    },
+    {
+      "id": "equivalent-representation-with-documented-transformation",
+      "scenario": "Equivalent source meanings use different representations and a named/versioned, lineage-preserving transformation is available.",
+      "inputs": {
+        "observations": [
+          {"schema": "policy/1", "value": {"enabled": true}},
+          {"schema": "policy/2", "value": {"state": "active"}}
+        ],
+        "transformation": {"id": "synthetic-policy-map", "version": "1", "preservesOriginals": true}
+      },
+      "expected": {
+        "environment": "no-drift",
+        "collection": "stable",
+        "representation": "transformation-required",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "comparable-after-documented-transformation"
+      },
+      "rationale": "Representation changes are comparable only through an explicitly identified transformation with preserved originals and lineage."
+    },
+    {
+      "id": "malformed-envelope",
+      "scenario": "An envelope omits its required producer identity.",
+      "inputs": {"schemaFixture": "fixtures/schema-invalid/malformed-envelope.json"},
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "schema-validation-rejected"
+      },
+      "rationale": "Malformed records are rejected explicitly and cannot produce a security assessment."
+    },
+    {
+      "id": "missing-collection-timestamp",
+      "scenario": "A collection manifest omits its required collection start timestamp.",
+      "inputs": {"schemaFixture": "fixtures/schema-invalid/missing-collection-timestamp.json"},
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "invalid",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "schema-validation-rejected"
+      },
+      "rationale": "A missing collection timestamp is a contract validation error, not a current observation or successful collection."
+    },
+    {
+      "id": "duplicate-envelope-submission",
+      "scenario": "The same producer-scoped envelope ID and immutable content are submitted twice.",
+      "inputs": {
+        "producerAuthority": "collector-a",
+        "envelopeId": "envelope-a",
+        "sameContent": true,
+        "submissionCount": 2
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "comparable",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "ingestion": "idempotent-duplicate",
+        "result": "acknowledge-without-overwrite"
+      },
+      "rationale": "An exact duplicate under the same producer authority and ID is idempotent; same-ID different-content is a conflict."
+    },
+    {
+      "id": "replayed-older-evidence",
+      "scenario": "An older envelope is resubmitted after newer evidence; source sequence and receiver policy are available but do not prove malicious intent.",
+      "inputs": {
+        "olderCollectionTime": "2026-01-01T00:00:00Z",
+        "newerCollectionTime": "2026-01-02T00:00:00Z",
+        "sourceSequence": "synthetic-sequence"
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "changed",
+        "representation": "comparable",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "ingestion": "replay-or-backfill-review",
+        "result": "freshness-warning-not-proof-of-malice"
+      },
+      "rationale": "Older evidence can be delayed backfill or replay; warn or reject only under an explicit receiver policy and preserve original time."
+    },
+    {
+      "id": "reduced-scope-between-runs",
+      "scenario": "A later collection requests a narrower scope and omits targets included in the prior scope.",
+      "inputs": {
+        "scopes": [
+          {"scopeId": "scope-a", "expectedTargets": ["object-a", "object-b"]},
+          {"scopeId": "scope-a", "expectedTargets": ["object-a"]}
+        ]
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "changed",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "coverage-change-not-remediation"
+      },
+      "rationale": "A reduced requested scope is a collection/coverage change and says nothing about excluded targets' current state."
+    },
+    {
+      "id": "collector-failure",
+      "scenario": "The collector records a failed source attempt and no observation for the requested target.",
+      "inputs": {
+        "manifest": {"status": "failed", "sourceAttemptStatus": "unavailable", "expectedTargets": ["object-a"], "observedTargets": []}
+      },
+      "expected": {
+        "environment": "unknown",
+        "collection": "failed",
+        "representation": "not-assessed",
+        "identity": "unknown",
+        "evaluation": "not-assessed",
+        "trust": "warning",
+        "result": "collector-error-not-control-failure"
+      },
+      "rationale": "Collector/source failure is an acquisition error; it is not evidence that a control failed."
+    },
+    {
+      "id": "invalid-integrity-metadata",
+      "scenario": "An envelope claims verified integrity without verifier, time or method metadata.",
+      "inputs": {"schemaFixture": "fixtures/schema-invalid/invalid-integrity-metadata.json"},
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "error",
+        "result": "integrity-claim-rejected"
+      },
+      "rationale": "A verification claim without verification context is structurally rejected; digest presence alone does not establish authenticity."
+    },
+    {
+      "id": "unknown-rule-version",
+      "scenario": "The evidence is available, but the consumer does not recognize the assessment's rule version.",
+      "inputs": {
+        "assessment": {"ruleId": "synthetic-rule", "ruleVersion": "unknown-version", "outcome": "pass"},
+        "recognizedRuleVersions": ["1"]
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "unknown",
+        "evaluation": "unknown",
+        "trust": "warning",
+        "result": "no-fabricated-assessment-equivalence"
+      },
+      "rationale": "Outcome labels alone cannot equate unknown rule semantics to a known rule version."
+    },
+    {
+      "id": "relationship-drift-between-stable-objects",
+      "scenario": "Two endpoint objects keep stable authority, scope and native IDs while their observed relationship changes.",
+      "inputs": {
+        "relationships": [
+          {"sourceNativeId": "object-a", "type": "member-of", "targetNativeId": "object-b"},
+          {"sourceNativeId": "object-a", "type": "member-of", "targetNativeId": "object-c"}
+        ]
+      },
+      "expected": {
+        "environment": "drift",
+        "collection": "stable",
+        "representation": "comparable",
+        "identity": "same",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "result": "relationship-drift"
+      },
+      "rationale": "Relationships are independently observed evidence and can drift while both endpoint identities remain stable."
+    },
+    {
+      "id": "completed-collection-partial-control-coverage",
+      "scenario": "The collection successfully completes the entire declared source scope, while an assessment evaluates only some relevant subjects.",
+      "inputs": {
+        "manifest": {
+          "collectionStatus": "succeeded",
+          "coverage": {"status": "complete", "expectedTargets": ["object-a", "object-b"], "observedTargets": ["object-a", "object-b"]}
+        },
+        "assessment": {
+          "executionStatus": "completed",
+          "controlCoverage": {"status": "partial", "assessedSubjects": ["object-a"], "unassessedSubjects": ["object-b"]}
+        }
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "stable",
+        "representation": "not-assessed",
+        "identity": "not-assessed",
+        "evaluation": "not-assessed",
+        "trust": "acceptable-assertion",
+        "coverage": "partial",
+        "result": "collection-complete-control-coverage-partial"
+      },
+      "rationale": "A successful, complete collection run does not imply that every relevant control subject was assessed."
+    },
+    {
+      "id": "failed-assessment-cannot-pass",
+      "scenario": "An evaluator failure is presented with a passing outcome.",
+      "inputs": {
+        "schemaFixture": "fixtures/schema-invalid/failed-assessment-pass.json"
+      },
+      "expected": {
+        "environment": "not-assessed",
+        "collection": "not-assessed",
+        "representation": "invalid",
+        "identity": "not-assessed",
+        "evaluation": "unknown",
+        "trust": "error",
+        "result": "failed-evaluation-cannot-be-control-pass"
+      },
+      "rationale": "An unsuccessful evaluation cannot produce a security Pass; it must remain an explicit execution error/unknown."
+    }
+  ]
+}

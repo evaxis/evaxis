@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evaxis:schema:observation:0.1",
+  "title": "Evaxis Observation v0.1",
+  "description": "Source-reported observation kept distinct from assessment results.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "contractVersion",
+    "collectionRunId",
+    "observedAt",
+    "source",
+    "target",
+    "observationType",
+    "observationSchema",
+    "collector",
+    "representation"
+  ],
+  "properties": {
+    "observationId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "contractVersion": {
+      "const": "0.1"
+    },
+    "collectionRunId": {
+      "$ref": "#/$defs/identifier"
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "scopeId"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "scopeId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "tenantBoundary": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sourceSystem": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sourceVersion": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "observationType": {
+      "$ref": "#/$defs/identifier"
+    },
+    "observationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "semanticProfile": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "collector": {
+      "$ref": "#/$defs/collector"
+    },
+    "representation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding"],
+      "properties": {
+        "encoding": {
+          "enum": ["source-native", "json", "text", "opaque-reference", "other"]
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "content": {
+          "type": ["object", "array", "string", "number", "boolean", "null"]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["content"]
+        },
+        {
+          "required": ["reference"]
+        }
+      ]
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/lifecycle"
+    },
+    "correlations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/correlation"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value", "covers"],
+      "properties": {
+        "algorithm": {
+          "$ref": "#/$defs/identifier"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "covers": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "scopeId", "nativeId", "lifecycle"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "scopeId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "nativeId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/identifier"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/lifecycle"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "basis"],
+      "properties": {
+        "state": {
+          "enum": ["active", "deletion-confirmed", "unknown"]
+        },
+        "basis": {
+          "enum": ["direct-observation", "source-tombstone", "collector-inference", "unknown"]
+        },
+        "evidenceReference": {
+          "$ref": "#/$defs/identifier"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "deletion-confirmed"
+              }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "enum": ["direct-observation", "source-tombstone"]
+              }
+            },
+            "required": ["evidenceReference"]
+          }
+        }
+      ]
+    },
+    "collector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "id", "version", "identityStatus"],
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/identifier"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "identityStatus": {
+          "enum": ["asserted", "authenticated", "unverified", "invalid", "unknown"]
+        },
+        "identityMethod": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "correlation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "status", "basis", "candidate"],
+      "properties": {
+        "method": {
+          "$ref": "#/$defs/identifier"
+        },
+        "status": {
+          "enum": ["correlated", "ambiguous", "rejected"]
+        },
+        "basis": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authority", "scopeId", "nativeId"],
+          "properties": {
+            "authority": {
+              "$ref": "#/$defs/identifier"
+            },
+            "scopeId": {
+              "$ref": "#/$defs/identifier"
+            },
+            "nativeId": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        "confidence": {
+          "enum": ["high", "medium", "low", "unknown"]
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target"],
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/identifier"
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authority", "scopeId", "nativeId"],
+          "properties": {
+            "authority": {
+              "$ref": "#/$defs/identifier"
+            },
+            "scopeId": {
+              "$ref": "#/$defs/identifier"
+            },
+            "nativeId": {
+              "$ref": "#/$defs/identifier"
+            },
+            "displayName": {
+              "type": "string"
+            }
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
