@@ -2,11 +2,13 @@
 
 ## Contract status
 
-Active targeted remediation for https://github.com/evaxis/evaxis/pull/1.
-Correct the integrity conditional to test `claimStatus`, add a complete
-otherwise-valid negative envelope with `claims-verified` but no
-`verificationClaim`, and prove all other allowed statuses remain valid without
-verification metadata. Keep producer assertions distinct from receiver trust.
+Closed — submitted for review, not approved. Targeted remediation is published
+on the existing Core PR #1 branch:
+https://github.com/evaxis/evaxis/pull/1. The integrity conditional tests
+`claimStatus`; a complete negative envelope omits `verificationClaim` while
+claiming `claims-verified`; validation confirms all other allowed statuses
+remain valid without verification metadata. Producer assertions remain
+distinct from receiver trust.
 
 ## Scope and invariants
 

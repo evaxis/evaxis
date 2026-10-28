@@ -3,7 +3,7 @@
 
 ## Plan metadata
 - PR / branch: Core PR #1 / `spec/evidence-envelope-v0.1`
-- Status: Active targeted remediation
+- Status: Closed — submitted for review; proposal pending approval
 - Author: Copilot
 - Created: 2026-10-28
 - Last updated: 2026-10-28
