@@ -2,12 +2,12 @@
 
 ## Contract status
 
-Active review-revision scope for https://github.com/evaxis/evaxis/pull/1.
-The user requests cross-PR corrections before merge; keep the PR open and the
-schema/fixture contract proposed. Tighten producer trust claims, coverage and
-package consistency, assessment input basis, representation exclusivity, and
-the distinction between schema fixtures, package checks, semantic expectations
-and future behavior tests. Keep architecture PR #3 aligned.
+Closed — submitted for review, not approved. The proposal remains open for
+maintainer review at https://github.com/evaxis/evaxis/pull/1. The cross-PR
+revisions tighten producer trust claims, coverage and package consistency,
+assessment input basis, representation exclusivity, and the distinction
+between schema fixtures, package checks, semantic expectations and future
+behavior tests. Architecture PR #3 remains the semantic authority.
 
 ## Goal and approved scope
 

@@ -2,7 +2,7 @@
 
 ## Plan metadata
 - PR / branch: core PR #1 / `spec/evidence-envelope-v0.1`
-- Status: Active review revision; proposal pending explicit architectural approval
+- Status: Closed — submitted for review; proposal pending explicit architectural approval
 - Author: Copilot
 - Created: 2026-10-28
 - Last updated: 2026-10-28
