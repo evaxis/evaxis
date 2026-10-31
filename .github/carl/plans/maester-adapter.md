@@ -1,87 +1,62 @@
-# Maester adapter feasibility plan
+# Maester compatibility review remediation plan
 
 ## Plan metadata
 - PR / branch: [Core PR #2](https://github.com/evaxis/evaxis/pull/2) / `feat/maester-adapter`
-- Status: Closed — submitted for review; not merged
-- Purpose: Establish whether actual Maester results can produce defensible Evidence Envelope v0.1 records without fabricated provenance.
+- Status: Active — F1–F3 review remediation; existing PR remains open and unmerged
+- Purpose: Correct status/links and check in a pinned, offline-only reproduction tool without implementing an adapter.
 - Created: 2026-10-28
-- Last updated: 2026-10-31
+- Last updated: 2026-11-02
 
 ## Scope
 
-User-requested assessment of a replaceable Maester-to-Evaxis v0.1 import
-boundary on a separate feature branch. Work only from pinned upstream source
-and synthetic data; no tenant credentials, schema changes, publication or
-merge.
-
-## Purpose
-
-Decide adapter feasibility from pinned, actual Maester output and preserve a
-reproducible synthetic representation without inventing evidence provenance.
+Remediate Core PR findings F1–F3 on the existing branch. v0.1 artifacts are
+merged into default branches but the semantic specification remains proposed
+pending explicit architectural approval. Work only from exact pinned sources
+and reviewed synthetic data; no tenant credentials, schema changes, Pack
+publication, adapter implementation or merge.
 
 ## Goal
 
-Deliver the supported result projection and mapping documentation, validate
-the fixture against actual offline output and existing Core conformance, then
-submit an unmerged Core PR linked to Architecture.
+Fix the status description; use PR #4 permalinks for pending Architecture
+documents; add tracked instructions and a PowerShell tool to fetch exact
+commits, run only reviewed offline synthetic tests, validate expected row
+statuses/family identity/disconnected behavior, and optionally compare the
+existing privacy-safe projection.
 
 ## Affected files
 
 - `docs/maester-compatibility.md`
-- `tests/fixtures/maester-v3/native-result-projection.json`
-- `README.md`, `.github/carl/memory.md`
+- `tools/maester-lab/verify-maester.ps1`
+- `tools/maester-lab/README.md`
+- `.github/carl/memory.md`
 - `.github/carl/current-pr-contract.md`
 - `.github/carl/plans/maester-adapter.md`
 
-## Steps
+## Tool requirements
 
-1. Compare captured native rows with a privacy-safe synthetic projection.
-2. Document mapping, untrusted claims, missing provenance, unsupported
-   information and deferred adversarial cases.
-3. Keep schemas unchanged and omit adapter code because required source/run/
-   subject/coverage information is unavailable.
-4. Run Core conformance, lab checks, cARL diagnostics and whitespace/secret
-   checks.
-5. Commit and push this branch, then open a linked PR without merging.
+- Fetch only the four immutable SHA pins; verify each resulting `HEAD`.
+- Require PowerShell 7.4+ and Maester 3.0.0; never install modules or Packs.
+- Operate only on synthetic demo test IDs 1001–1006 and 1009; do not call
+  Graph, `Connect-Maester`, `Install-MtPack`, or publish.
+- Disable telemetry, store full runtime output only in a local untracked
+  workspace, and print only minimized identifiers/status fields.
+- Fail closed on missing dependencies, pin/runtime mismatch, or unexpected
+  rows. Projection comparison is optional and compares only listed fields.
 
-## Test strategy
+## Assertions and validation
 
-- Run Core `python3 tools/validate_conformance.py`.
-- Run the pinned lab script and compare its nine result rows with the
-  sanitized projection.
-- Run cARL doctor/status/effective/trace/harness and plan checks.
-- Check whitespace and added files for credential patterns.
+1. Exact upstream commit, PowerShell and Maester versions are checked.
+2. Four Pack structures statically validate; nine synthetic rows have expected
+   statuses; disconnected service is `ServiceNotConnected`.
+3. Three family rows preserve `ParentId`/`InstanceId`; optional Core projection
+   comparison matches only its selected fields.
+4. No automatic install, tenant/Graph call, full-output publication, schema
+   change, Evaxis output, or claim of adapter conformance occurs.
+5. Core conformance, JSON/Markdown/link checks, secret scan, hygiene, cARL
+   diagnostics and applicable CI pass; report any unavailable check.
 
-## Risks
+## Stop conditions
 
-The fixture is a projection, not a Maester-defined export or a lossless raw
-capture. No schema-valid Evaxis package or adapter output can be established
-from the tested tenantless result rows.
-
-## cARL/docs reconciliation
-
-Core memory and docs record the durable provider-neutral trust boundary.
-Close the active contract only after PR submission; do not change schemas,
-invariants or dependency state.
-
-## Assertions
-
-1. Input is a documented, versioned representation supported by the actual
-   Maester runtime.
-2. The adapter rejects impossible/ambiguous inputs and records uncertainty
-   rather than fabricating source evidence or verification.
-3. Output, when possible, validates as a complete four-record v0.1 package and
-   satisfies package consistency.
-4. Test families preserve stable instance suffixes and require an
-   authority/scope/native ID before any source Observation can be emitted.
-5. Synthetic fixtures are not reported as tenant/provider execution.
-
-## Steps and checks
-
-- Read architecture semantics, four Core schemas and cARL policy.
-- Inspect the pinned Maester result row implementation and exercise offline
-  paths only if the pinned module/runtime is available.
-- Decide adapter feasibility from exposed fields; if blocked, document the
-  versioned input/mapping proposal and do not invent a runtime format.
-- Run Core conformance, focused tests and cARL diagnostics; open a PR without
-  merging.
+Stop on mismatched SHA or runtime, unexpected network/credential dependency,
+failed structural/synthetic assertions, or any request to infer provenance,
+change v0.1 schemas, publish a Pack, or implement an adapter.

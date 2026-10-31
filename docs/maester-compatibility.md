@@ -1,15 +1,29 @@
 # Maester result compatibility (research)
 
-**Status:** source-verified research and proposed boundary only. It is not a
-Core contract, product adapter, or approval of the proposed Evidence Envelope
-v0.1. The four public schemas are unchanged.
+**Research status:** source-verified findings submitted for review in Core
+[PR #2](https://github.com/evaxis/evaxis/pull/2). This document is not an
+approved integration contract.
 
-The full pinned research and architecture decision are in
-[Evaxis Architecture](https://github.com/evaxis/architecture/blob/research/maester-compatibility/research/maester-compatibility.md)
-and [ADR 0002](https://github.com/evaxis/architecture/blob/research/maester-compatibility/adr/0002-maester-compatibility-boundary.md).
-The official Maester and three Pack checkouts, pinned by SHA, and reproducible
-offline test script are under `~/git/evaxis-upstream-lab` (outside product
-source trees).
+**Evidence Envelope status:** The v0.1 specification and its Core schemas
+were merged into their repositories' default branches through Architecture
+PR #3 and Core PR #1. The authoritative specification nevertheless records
+its status exactly as **“Proposed; pending maintainer review and explicit
+architectural approval.”** The merged PRs did not change that approval status.
+The four schemas remain unchanged in this remediation.
+
+**Integration status:** ADR 0002 remains Proposed. No adapter or evidence
+capture interface is implemented or approved; future capture mechanisms are
+alternatives for review, not decisions.
+
+The full pinned research and proposed architecture decision are available as
+immutable snapshots of the current Architecture PR #4 revision:
+[compatibility research](https://github.com/evaxis/architecture/blob/b1cf74e4ae14efe123e21ac41c7667306fe71b34/research/maester-compatibility.md)
+and [ADR 0002](https://github.com/evaxis/architecture/blob/b1cf74e4ae14efe123e21ac41c7667306fe71b34/adr/0002-maester-compatibility-boundary.md).
+The [Architecture PR #4](https://github.com/evaxis/architecture/pull/4)
+remains the review thread. The tracked offline verification tool is in
+[`tools/maester-lab`](../tools/maester-lab/README.md); it fetches the four
+pinned source commits and keeps checkouts and full runtime output outside the
+Core source tree.
 
 ## What Maester 3 actually emits
 
@@ -90,10 +104,10 @@ the supported synthetic and tenantless result rows alone.
 
 ## Verified offline paths
 
-The lab's `scripts/verify-maester.ps1` imports pinned Maester source, reports
-runtime/commands, runs `Test-MtPack` on the demo, built-in Zero Trust
-Assessment, LPMS and RK Intune Packs, then runs selected synthetic demo IDs
-using `Invoke-MtTest -Path`. It disables telemetry and does not invoke
+The tracked `tools/maester-lab/verify-maester.ps1` checks out pinned Maester
+source, runs `Test-MtPack` on the demo, built-in Zero Trust Assessment, LPMS
+and RK Intune Packs, then runs selected synthetic demo IDs using
+`Invoke-MtTest -Path`. It disables telemetry and does not invoke
 `Connect-Maester`, call Graph, install a Pack, or access a tenant.
 The lab script asserts all four structural checks succeed, the nine expected
 synthetic IDs/statuses are returned, the disconnected connector reports
