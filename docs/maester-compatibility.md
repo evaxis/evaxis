@@ -111,9 +111,11 @@ and RK Intune Packs, then runs selected synthetic demo IDs using
 `Connect-Maester`, call Graph, install a Pack, or access a tenant.
 The lab script asserts all four structural checks succeed, the nine expected
 synthetic IDs/statuses are returned, the disconnected connector reports
-`ServiceNotConnected`, and family parent/instance IDs are retained. Its
-optional `-ProjectionPath` parameter compares the Core fixture's selected
-fields with those runtime rows.
+`ServiceNotConnected`, and family parent/instance IDs are retained. By
+default, the script compares selected fields from the runtime results with the
+tracked Core fixture at
+`tests/fixtures/maester-v3/native-result-projection.json`. The
+`-SkipProjection` switch disables this comparison.
 
 Observed result IDs/statuses:
 

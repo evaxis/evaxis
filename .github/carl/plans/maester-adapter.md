@@ -2,10 +2,10 @@
 
 ## Plan metadata
 - PR / branch: [Core PR #2](https://github.com/evaxis/evaxis/pull/2) / `feat/maester-adapter`
-- Status: Closed — F1–F3 remediation submitted; existing PR remains open and unmerged
+- Status: Closed — final script-parameter documentation correction submitted on existing PR #2
 - Purpose: Correct status/links and check in a pinned, offline-only reproduction tool without implementing an adapter.
 - Created: 2026-10-28
-- Last updated: 2026-11-02
+- Last updated: 2026-10-31
 
 ## Scope
 
@@ -14,6 +14,10 @@ merged into default branches but the semantic specification remains proposed
 pending explicit architectural approval. Work only from exact pinned sources
 and reviewed synthetic data; no tenant credentials, schema changes, Pack
 publication, adapter implementation or merge.
+
+Final documentation-only correction: describe the implemented default
+projection comparison and `-SkipProjection` switch accurately in
+`docs/maester-compatibility.md`. Do not modify the script or fixture.
 
 ## Goal
 
@@ -26,9 +30,6 @@ existing privacy-safe projection.
 ## Affected files
 
 - `docs/maester-compatibility.md`
-- `tools/maester-lab/verify-maester.ps1`
-- `tools/maester-lab/README.md`
-- `.github/carl/memory.md`
 - `.github/carl/current-pr-contract.md`
 - `.github/carl/plans/maester-adapter.md`
 
@@ -60,3 +61,8 @@ existing privacy-safe projection.
 Stop on mismatched SHA or runtime, unexpected network/credential dependency,
 failed structural/synthetic assertions, or any request to infer provenance,
 change v0.1 schemas, publish a Pack, or implement an adapter.
+
+For the final documentation correction, acceptance is limited to verifying
+that no obsolete projection-path option reference remains and that the
+replacement matches the tracked script's existing parameter declaration and
+default behavior.
