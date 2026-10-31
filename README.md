@@ -40,6 +40,7 @@ and [initial threat-model scope](https://github.com/evaxis/architecture/blob/mai
 | `schemas/{evidence,observations,assessments,manifests}/` | Proposed modular Evidence Envelope v0.1 JSON Schemas; pending architecture review |
 | `tests/conformance/` | Structural fixtures, package-consistency rejection cases, and semantic expectations with preconditions; no comparison engine |
 | `tools/validate_conformance.py` | Validation-only tooling; not a product runtime or comparison engine |
+| `docs/maester-compatibility.md` | Source-verified Maester research and a proposed import boundary; no adapter |
 
 The [human-semantic Evidence Envelope v0.1 proposal](https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md)
 is authoritative for terminology and intended meaning. This repository owns

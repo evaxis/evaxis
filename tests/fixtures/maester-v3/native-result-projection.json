@@ -1,0 +1,71 @@
+{
+  "captureFormat": "evaxis.maester-native-result-projection/0.1",
+  "synthetic": true,
+  "source": {
+    "repository": "maester365/maester",
+    "commit": "b8ad89557a831d3d3d7c369174300701243af8a6",
+    "runtimeVersion": "3.0.0",
+    "powershellVersion": "7.6.0",
+    "captureCommand": "Invoke-MtTest -Path <demo-pack> -Id <selected-synthetic-ids>",
+    "rowSchemaVersion": null,
+    "notes": "Projection of selected fields from actual local synthetic native result rows; omits nondeterministic Duration; not a Maester-defined export format."
+  },
+  "pack": {
+    "Id": "maester365.demo",
+    "Version": "1.1.0",
+    "Commit": null,
+    "Publisher": "maester365",
+    "BuiltIn": false,
+    "Runtime": "Script"
+  },
+  "rows": [
+    {
+      "Id": "MP.DEMO.1001",
+      "Result": "Passed"
+    },
+    {
+      "Id": "MP.DEMO.1002",
+      "Result": "Failed"
+    },
+    {
+      "Id": "MP.DEMO.1003",
+      "Result": "Investigate"
+    },
+    {
+      "Id": "MP.DEMO.1004",
+      "Result": "Skipped",
+      "ReasonCode": "TestSkipped",
+      "ReasonDetail": "This demo test always skips itself."
+    },
+    {
+      "Id": "MP.DEMO.1005",
+      "Result": "Error",
+      "ReasonCode": "TestError",
+      "ReasonDetail": "This demo test throws on purpose, to show an Error result."
+    },
+    {
+      "Id": "MP.DEMO.1006",
+      "Result": "Skipped",
+      "ReasonCode": "ServiceNotConnected",
+      "ReasonDetail": "Not connected to Demo sample service. Run Connect-Maester -Service DEMO.Sample."
+    },
+    {
+      "Id": "MP.DEMO.1009.app-one",
+      "Result": "Passed",
+      "ParentId": "MP.DEMO.1009",
+      "InstanceId": "MP.DEMO.1009.app-one"
+    },
+    {
+      "Id": "MP.DEMO.1009.app-two",
+      "Result": "Failed",
+      "ParentId": "MP.DEMO.1009",
+      "InstanceId": "MP.DEMO.1009.app-two"
+    },
+    {
+      "Id": "MP.DEMO.1009.app-three",
+      "Result": "Passed",
+      "ParentId": "MP.DEMO.1009",
+      "InstanceId": "MP.DEMO.1009.app-three"
+    }
+  ]
+}
