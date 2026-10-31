@@ -2,9 +2,11 @@
 
 ## Contract status
 
-Ready for PR submission — research and adapter-feasibility work is complete on
-`feat/maester-adapter`, based on the merged v0.1 baseline. The v0.1 schemas
-remain unchanged and architecture-owned semantics govern interpretation.
+Closed — submitted for review in
+[Core PR #2](https://github.com/evaxis/evaxis/pull/2), unmerged. Research and
+adapter-feasibility work is complete on `feat/maester-adapter`, based on the
+merged v0.1 baseline. The v0.1 schemas remain unchanged and architecture-owned
+semantics govern interpretation.
 
 ## Goal and approved scope
 

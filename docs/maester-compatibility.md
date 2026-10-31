@@ -5,8 +5,8 @@ Core contract, product adapter, or approval of the proposed Evidence Envelope
 v0.1. The four public schemas are unchanged.
 
 The full pinned research and architecture decision are in
-[Evaxis Architecture](https://github.com/evaxis/architecture/blob/main/research/maester-compatibility.md)
-and [ADR 0002](https://github.com/evaxis/architecture/blob/main/adr/0002-maester-compatibility-boundary.md).
+[Evaxis Architecture](https://github.com/evaxis/architecture/blob/research/maester-compatibility/research/maester-compatibility.md)
+and [ADR 0002](https://github.com/evaxis/architecture/blob/research/maester-compatibility/adr/0002-maester-compatibility-boundary.md).
 The official Maester and three Pack checkouts, pinned by SHA, and reproducible
 offline test script are under `~/git/evaxis-upstream-lab` (outside product
 source trees).

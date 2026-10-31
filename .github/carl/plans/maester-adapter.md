@@ -1,8 +1,8 @@
 # Maester adapter feasibility plan
 
 ## Plan metadata
-- PR / branch: not opened / `feat/maester-adapter`
-- Status: Ready for PR submission
+- PR / branch: [Core PR #2](https://github.com/evaxis/evaxis/pull/2) / `feat/maester-adapter`
+- Status: Closed — submitted for review; not merged
 - Purpose: Establish whether actual Maester results can produce defensible Evidence Envelope v0.1 records without fabricated provenance.
 - Created: 2026-10-28
 - Last updated: 2026-10-31
