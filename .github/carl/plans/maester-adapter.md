@@ -2,7 +2,7 @@
 
 ## Plan metadata
 - PR / branch: [Core PR #2](https://github.com/evaxis/evaxis/pull/2) / `feat/maester-adapter`
-- Status: Active — F1–F3 review remediation; existing PR remains open and unmerged
+- Status: Closed — F1–F3 remediation submitted; existing PR remains open and unmerged
 - Purpose: Correct status/links and check in a pinned, offline-only reproduction tool without implementing an adapter.
 - Created: 2026-10-28
 - Last updated: 2026-11-02

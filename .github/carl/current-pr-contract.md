@@ -2,11 +2,11 @@
 
 ## Contract status
 
-Active — user-authorized remediation of findings F1–F3 in
-[Core PR #2](https://github.com/evaxis/evaxis/pull/2), on `feat/maester-adapter`.
-The existing PR remains open and unmerged. Evidence Envelope v0.1 artifacts
-are merged to their default branches, while the authoritative semantic
-specification remains explicitly proposed pending architectural approval.
+Closed — F1–F3 remediation committed to
+[Core PR #2](https://github.com/evaxis/evaxis/pull/2) on `feat/maester-adapter`;
+the PR remains open and unmerged. Evidence Envelope v0.1 artifacts are merged
+to their default branches, while the authoritative semantic specification
+remains explicitly proposed pending architectural approval.
 
 ## Goal and approved scope
 
