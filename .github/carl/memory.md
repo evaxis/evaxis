@@ -74,6 +74,16 @@ These are repository-specific canonical invariants, supplementing the bundled
     auto-merge, force-push, delete protected branches or weaken protections to
     make automation succeed. Never modify unrelated organisations or projects.
 
+## Source-verified Maester compatibility research
+
+`docs/maester-compatibility.md` records the pinned Maester 3.0.0 result
+boundary and points to Architecture's research/ADR. Native Maester statuses
+are execution and producer assessment claims, not source observations; normal
+rows lack enough run, subject, collection and source provenance to populate a
+complete v0.1 package without invention. There is no Core adapter or schema
+change. Keep any future integration optional and outside provider-neutral
+schemas; reject incomplete mappings rather than fabricate evidence.
+
 ## Repository-specific trust boundaries
 
 These supplement `.github/carl/trust-boundaries.md`.

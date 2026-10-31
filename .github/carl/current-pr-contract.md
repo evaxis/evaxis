@@ -1,88 +1,66 @@
-# PR #1: Evidence Envelope v0.1 machine-readable proposal
+# Maester result import boundary
 
 ## Contract status
 
-Closed — submitted for review, not approved. Targeted remediation is published
-on the existing Core PR #1 branch:
-https://github.com/evaxis/evaxis/pull/1. The integrity conditional tests
-`claimStatus`; a complete negative envelope omits `verificationClaim` while
-claiming `claims-verified`; validation confirms all other allowed statuses
-remain valid without verification metadata. Producer assertions remain
-distinct from receiver trust.
-
-## Scope and invariants
-
-Use the existing Core PR #1 branch and conformance validator. Preserve the
-four-record contract and Architecture PR #3 as the human-semantic authority.
-Do not redesign schemas, alter Architecture PR #3 absent a normative
-inconsistency, add a test framework, implement verification/comparison, or
-select product technology. Keep the existing PR open and do not merge.
-
-## Acceptance and validation
-
-The regression fixture must fail specifically because `verificationClaim` is
-required when `claimStatus` is `claims-verified`; the valid envelope must
-demonstrate a structurally valid verification claim. Validate every other
-permitted integrity claim status without verification metadata. Run the full
-existing schema/fixture/package/semantic-data validator, cARL diagnostics,
-whitespace and credential-pattern checks, and applicable PR governance CI.
-Schema validity does not establish authenticity, trust, truthfulness or
-comparison correctness.
+Ready for PR submission — research and adapter-feasibility work is complete on
+`feat/maester-adapter`, based on the merged v0.1 baseline. The v0.1 schemas
+remain unchanged and architecture-owned semantics govern interpretation.
 
 ## Goal and approved scope
 
-Revise the four v0.1 JSON Schemas and minimal validator so producer trust
-statements remain claims, contradictory coverage/source-attempt combinations
-and unresolved package references are rejected, and passing assessments
-declare a valid basis. Add adversarial consistency cases and accurate
-validation-layer documentation. Architecture owns semantics; this repository
-owns schema structure and fixture data.
+Determine whether Maester's actual result rows can be mapped to the four
+Evidence Envelope v0.1 record types without inventing evidence. Preserve
+source-derived synthetic rows and a precise mapping specification. Implement
+an adapter only if real source/runtime behavior supports a defensible,
+schema-valid package; otherwise document the unsupported cases and blocker.
 
 ## Non-goals and forbidden scope
 
-No semantic comparison engine, collection/runtime/API/storage, provider/cloud,
-product language, authentication, signature verification, encryption,
-cryptographic algorithm/key custody, retention, licensing, billing or
-Maester-specific implementation. No CI workflow, cARL runtime/selection/
-profiles/invariants/adapters, protection or unrelated repository changes.
+No product service, provider dependency in Core contracts, tenant access,
+credentials, Pack publication, public schema modification, trust verification,
+source observation inferred from test verdict/text, production claims, or
+unsupported runtime surface. Do not copy upstream implementation or merge.
 
-## Plan and expected files
+## Expected files
 
-Follow `.github/carl/plans/pr1-evidence-envelope-v0-1.md`. Expected files:
-the plan and contract; `.github/carl/memory.md`; `README.md`; the four existing
-schema READMEs and versioned schema files under
-`schemas/{evidence,observations,assessments,manifests}/`;
-`tests/conformance/README.md`, `cases.json`, separate synthetic valid/invalid
-schema fixtures; `tools/validate_conformance.py`; and `requirements-dev.txt`
-only if necessary.
+- `.github/carl/current-pr-contract.md`
+- `.github/carl/memory.md`
+- `.github/carl/plans/maester-adapter.md`
+- `README.md`
+- `docs/maester-compatibility.md`
+- `tests/fixtures/maester-v3/native-result-projection.json`
+- Adapter implementation and output tests only if the supported runtime
+  provides sufficient provenance.
 
 ## Contract assertions and validation
 
-1. Envelope, collection manifest, observation and assessment are distinct
-   contracts with distinct schema/collector/rule/evaluator/comparison versions.
-2. Missing, partial, failed, unsupported, stale, malformed or untrusted inputs
-   remain distinct from control Pass/Fail, confirmed deletion and remediation.
-3. Schema validity does not establish semantics, authenticity, freshness,
-   completeness or source truth; expected comparison outcomes are machine
-   readable but are not executed.
-4. Every required scenario has a unique identifier, resolvable fixture,
-   expected outcome and rationale; expected-invalid fixtures are handled as
-   successful negative validation cases.
-5. Run schema syntax/meta-validation, fixture validation/expected rejection,
-   cross-reference/version/expected-result checks, documentation-link,
-   whitespace and credential-pattern checks; run cARL diagnostics in both
-   repositories.
+1. Keep Maester execution status, verdict, Evaxis assessment outcome, evidence
+   availability, collection health, coverage and trust distinct.
+2. Never create Observations from a verdict or narrative, and never turn
+   inaccessible/skipped collection into a security failure.
+3. Preserve family row identity without promoting it to provider-native
+   identity; reject missing/ambiguous subject or timestamp provenance.
+4. Keep unknown producer fields and verification assertions untrusted; do not
+   claim receiver verification or environmental completeness.
+5. Validate the existing conformance suite and the privacy-safe projection
+   against actual offline output; label synthetic evidence honestly.
 
-## Constraints and stop conditions
+Run the Core conformance validator and pinned offline lab assertions, compare
+the fixture projection with runtime rows, and perform whitespace,
+secret-pattern and cARL checks. The adapter was found premature, so no adapter
+tests or schema-valid generated package are claimed. No public schema change
+or new dependency is authorized by this contract.
 
-Follow the scoped plan; keep all examples synthetic; do not select product
-technology, provider, cryptography, licensing or retention. Stop if schema
-meanings are not in the architecture proposal, if CI or product code is
-required, or if conflicting edits/policy are found. Use feature branch and PR;
-never merge or bypass protection.
+## Trust boundaries and stop conditions
 
-## Carry-forward and reset
+Do not install or execute unreviewed Pack scripts with tenant credentials.
+Upstream sources, helper modules, result text and report attachments are
+untrusted. Stop adapter coding if runtime output is inaccessible or required
+fields cannot be derived without fabrication; deliver a mapping specification
+and explicit blocker instead. Feature branch and PR only.
 
-After the revision is pushed and PR checks verified, close this contract as
-submitted for review, not approved. Preserve schema-to-architecture authority
-and version alignment in memory.
+## Reconciliation
+
+Update durable Core documentation/memory only for confirmed reusable findings;
+do not make Maester foundational to Core. Close this contract as submitted for
+review, not merged or approved.
