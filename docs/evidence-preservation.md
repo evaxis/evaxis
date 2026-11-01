@@ -322,6 +322,14 @@ complete bundle may remain in the original parent; it is not deleted to hide
 the uncertain outcome. Cleanup failures report that incomplete private
 staging may remain. No directory-fsync or power-loss guarantee is introduced.
 
+Publication/parent-integrity failure remains the primary error even if private
+staging deletion, staging-descriptor close or retained ancestor-handle close
+also fails. Additional cleanup failures are fixed, sanitized Python 3.11+
+exception notes (`__notes__`); CLI diagnostics print those notes separately.
+A cleanup-only failure is itself an explicit error, not successful publication.
+Remaining cleanup is still attempted. A successfully renamed destination is
+never deleted to hide an uncertain parent check or close failure.
+
 | Configuration | Execution/support boundary |
 |---|---|
 | Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | Current isolated execution passed, including real handle/reparse/no-overwrite races and genuine native capture. |
@@ -377,3 +385,11 @@ Shared governance was not repaired or synced;
 no shared policy, adapter, invariant, template, pack, runtime or original
 governance workflow was repaired or changed. Repository-owned contract/plan,
 memory and developer documentation are reconciled separately.
+
+The bounded final review additionally fixes primary/secondary cleanup
+provenance and adds an always-run [capture merge gate](../tools/ci/README.md#merge-gate).
+The initial effective ruleset required only governance. The additive owner
+configuration requires all four capture names plus the aggregate, preserving
+strict, PR-only/no-bypass protections and zero required approvals. Current
+effective read-back and final execution evidence belong to the PR report;
+green historical runs alone do not demonstrate merge enforcement.

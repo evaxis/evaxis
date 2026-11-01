@@ -71,3 +71,48 @@ Reports contain synthetic suite results and platform metadata, not raw capture
 packages or customer evidence. A native Failed conclusion and unavailable
 Skipped assessment are expected synthetic outcomes, not test-suite failures.
 Passing checks establish neither source truth nor receiver verification.
+
+## Merge gate
+
+`Capture validation gate` always runs after the four `synthetic` matrix jobs.
+It requires the matrix dependency to conclude `success` and checks exactly
+four fresh, successful report artifacts for the current commit, required
+native execution, conformance, Python/PowerShell results and unchanged trust
+disclaimers. Opposite-platform test skips are allowed explicitly; skipped
+jobs, missing reports, native skips, failures, cancellation, neutral results
+and stale reports do not pass. No `continue-on-error` or job/path filter is
+used. Downloading same-run reports adds no Actions token permissions.
+
+GitHub accepts `skipped` and `neutral` required status checks, so the four
+matrix check names alone are not sufficient. Require these six GitHub Actions
+checks on `main-foundations`, with strict up-to-date checks:
+
+- `cARL governance`
+- `Synthetic capture (windows-2025, Python 3.11)`
+- `Synthetic capture (windows-2025, Python 3.13)`
+- `Synthetic capture (ubuntu-24.04, Python 3.11)`
+- `Synthetic capture (ubuntu-24.04, Python 3.13)`
+- `Capture validation gate`
+
+The existing active ruleset must retain its PR-only updates, empty bypass list,
+zero required approvals, review-thread resolution, deletion/non-fast-forward
+protection and existing merge methods. The additive owner update does not
+introduce a sole-maintainer approval deadlock. UI configuration: Settings >
+Rules > Rulesets > main-foundations > Require status checks to pass; add
+the exact six names, select GitHub Actions as source (app ID 15368), retain
+Require branches to be up to date before merging, then save and inspect the
+effective branch rules. Do not add bypass actors.
+
+No merge queue is configured. All currently permitted merge/squash/rebase
+paths are subject to the same ruleset; direct pushes are constrained by its
+PR requirement. Do not exercise a bypass to test this. A future merge queue
+requires separately reviewed `merge_group` execution.
+
+Required checks are not tamper-proof validation: maintainer review must protect
+the workflow, checker, report generator and exact four-job matrix. A repository
+administrator can edit rules later; no perpetual administrator-resistance
+claim is made. Removing a required workflow normally leaves missing checks
+blocking merge. Deliberately rewriting a required job to skip or return a
+false success remains a workflow-review boundary, not a protection provided by
+ordinary required-status rules. Organisation ruleset enumeration may require
+`admin:org`; use effective branch rules and report visibility limitations.

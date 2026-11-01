@@ -142,3 +142,28 @@ unsupported-primitive tests do not substitute for that execution.
 No hostile-host/privileged-attacker, arbitrary filesystem, crash-durability,
 session tamper-resistance, upstream attestation or receiver-trust guarantee is
 introduced. macOS publication remains unsupported.
+
+## Final-review regressions
+
+The follow-up adds seven publication/cleanup regressions and nine aggregate
+gate cases. The current suite discovers 146 cases. Local isolated Windows
+executed 135 successfully, with 11 Linux-only skips, conformance, all 36
+PowerShell cases and required native capture.
+
+Primary publication/integrity errors remain primary when cleanup also fails;
+safe notes preserve staging/handle failures and CLI output includes them.
+Publication failure with successful cleanup, secondary deletion failure,
+ancestor/descriptor close failure, cleanup-only close failure, uncertain
+parent after successful rename and clean/no-overwrite success are covered.
+There is no ordinary success path with an unrenamed staging directory:
+staging deletion runs on failure; after successful rename the source stage
+no longer exists. The cleanup-only regression therefore exercises actual
+post-rename descriptor/ancestor closure, not a fabricated deletion of the
+published destination.
+
+The [aggregate](../../tools/ci/README.md#merge-gate) rejects failed, cancelled,
+skipped, neutral or missing matrix execution, each missing report, stale
+commit/native results, malformed data and unexpected suite skips. It passes
+only the exact four fresh successful reports plus a successful matrix result.
+All cases use offline synthetic reports; actual workflow execution and
+effective required-check configuration must be evidenced separately.
