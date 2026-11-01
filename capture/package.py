@@ -166,6 +166,7 @@ def _windows_api() -> Any:
 
 def _windows_open(path: Path, *, directory: bool) -> int:
     api = _windows_api()
+    # Metadata-only handles do not enforce the delete-sharing exclusion.
     handle = api.CreateFileW(
         str(path), 0x80000000,
         3 if directory else 1, None, 3, 0x02000000 | 0x00200000, None,
@@ -181,7 +182,8 @@ def _windows_open(path: Path, *, directory: bool) -> int:
         if bool(attributes.attributes & 0x10) != directory or api.GetFileType(handle) != 1:
             raise CaptureFailure("JSON input must be a regular file" if not directory else "parent must be a directory")
     except CaptureFailure:
-        api.CloseHandle(handle)
+        if not api.CloseHandle(handle):
+            raise CaptureFailure("cannot close protected filesystem handle") from None
         raise
     return handle
 
@@ -206,12 +208,18 @@ def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Pat
     except OSError as exc:
         raise CaptureFailure("protected filesystem operation failed") from exc
     finally:
+        close_failed = False
         for handle in reversed(handles):
             if os.name == "nt":
                 if not _windows_api().CloseHandle(handle):
-                    raise CaptureFailure("cannot close protected filesystem handle")
+                    close_failed = True
             else:
-                os.close(handle)
+                try:
+                    os.close(handle)
+                except OSError:
+                    close_failed = True
+        if close_failed:
+            raise CaptureFailure("cannot close protected filesystem handle")
 
 
 def _check_parent(path: Path, parent_fd: int | None) -> None:
@@ -233,7 +241,8 @@ def read_json(path: Path) -> Any:
                 try:
                     fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
                 except OSError:
-                    _windows_api().CloseHandle(handle)
+                    if not _windows_api().CloseHandle(handle):
+                        raise CaptureFailure("cannot close protected filesystem handle") from None
                     raise
             else:
                 fd = os.open(

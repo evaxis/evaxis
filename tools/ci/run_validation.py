@@ -107,8 +107,8 @@ def main() -> int:
             "$ErrorActionPreference = 'Stop'; & $env:EVAXIS_CAPTURE_TEST_SCRIPT | ConvertTo-Json -Compress",
         ])
         report["powershellTests"] = json.loads(output)
-        if report["powershellTests"]["Failed"] != 0:
-            raise RuntimeError("PowerShell capture suite failed")
+        if report["powershellTests"]["Failed"] != 0 or report["powershellTests"]["PowerShellCaptureTests"] < 36:
+            raise RuntimeError("PowerShell capture suite failed or its required cases did not execute")
         report["status"] = "passed"
     except (PreparationFailure, RuntimeError, OSError, ValueError, subprocess.TimeoutExpired) as exc:
         report["failure"] = str(exc) if isinstance(exc, (PreparationFailure, RuntimeError)) else "validation execution failed"

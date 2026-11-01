@@ -609,7 +609,16 @@ class MaesterDependent(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             package = evidence.read_json(output / "package.json")
-            self.assertEqual(evidence.validate_evidence_package(package)["assessments"], 3)
+            report = evidence.validate_evidence_package(package)
+            self.assertEqual((report["observations"], report["assessments"]), (2, 3))
+            self.assertEqual(report["receiverVerification"], "not-performed")
+            self.assertEqual(report["sourceTruth"], "not-established")
+            source = evidence.read_json(ROOT / "examples" / "evidence-preservation" / "synthetic-source.json")
+            for actual, original in zip(package["observations"], source["objects"]):
+                self.assertEqual(actual["representation"], original["representation"])
+                self.assertEqual(actual["observedAt"], original["observedAt"])
+                self.assertEqual(actual["target"], original["target"])
+            self.assertEqual([record["outcome"] for record in package["assessments"]], ["pass", "fail", "unknown"])
             associations = [record["extensions"][evidence.EXTENSION]["frameworkAssociation"] for record in package["assessments"]]
             self.assertEqual([item["resultClaim"] for item in associations], ["Passed", "Failed", "Skipped"])
             self.assertEqual(len({item["invocationId"] for item in associations}), 3)
