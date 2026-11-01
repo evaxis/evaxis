@@ -39,7 +39,10 @@ callback three times, verifies run/result associations, writes a new private
 bundle, and validates its two observations/three assessments. An intentional
 native Failed conclusion and unavailable Skipped result are not suite failures.
 
-## Validation layers and observed results
+## Historical v0.1 validation
+
+The following results belong to the merged preservation experiment, not a
+claim that unchanged historical counts describe the current suite.
 
 | Layer | Executed result and meaning |
 |---|---|
@@ -89,7 +92,34 @@ ACLs. Sensitive sentinels never appear in safe exceptions or CLI diagnostics.
 Corrupted envelope/record lineage and substituted visibility constraints fail.
 
 Linux atomic publication and PowerShell on other operating systems were not
-executed. macOS publication, privileged/hostile ancestor races, storage
+executed in that historical run. macOS publication, arbitrary privileged/hostile ancestor races, storage
 immutability, cryptographic/receiver verification, semantic comparison and live
 providers are not validated capabilities. Neither schema success nor the
 intentionally synthetic verdicts establish source truth.
+
+## Portable hardening validation
+
+Use the [isolated runner and verified prerequisites](../../tools/ci/README.md)
+to require the genuine native golden rather than accepting its optional skip.
+The separate [capture workflow](../../.github/workflows/capture-validation.yml)
+targets x64 `windows-2025` and `ubuntu-24.04`, Python 3.11 and 3.13. Actual
+runtime/image/kernel/filesystem metadata and explicit skip reasons are
+preserved in per-job minimized JSON reports.
+
+| Current execution | Result |
+|---|---|
+| Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | 130 Python cases discovered; 121 executed successfully; nine Linux-only skips. Genuine native golden executed; conformance and 36 PowerShell cases passed. |
+| CI Windows/Linux matrix | Configured, not yet execution evidence; record actual runs before claiming platform validation. |
+
+Additional regressions prove selected final-link and ancestor replacement
+defenses, private file creation, regular-file/FIFO input rejection, concurrent
+publisher winner preservation, safe anchored cleanup, explicit fsync/rename/
+cleanup failures, unsupported publication refusal, dependency checksum tamper,
+unsafe archives and actual extracted-byte verification.
+Windows and Linux-specific skips are listed explicitly, not counted as passes.
+The Linux class must execute its actual libc no-replace path on Linux; mocked
+unsupported-primitive tests do not substitute for that execution.
+
+No hostile-host/privileged-attacker, arbitrary filesystem, crash-durability,
+session tamper-resistance, upstream attestation or receiver-trust guarantee is
+introduced. macOS publication remains unsupported.

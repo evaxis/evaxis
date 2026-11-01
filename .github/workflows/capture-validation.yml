@@ -1,0 +1,68 @@
+name: Capture validation
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capture-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic:
+    name: Synthetic capture (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, ubuntu-24.04]
+        python: ['3.11', '3.13']
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      MAESTER_DISABLE_TELEMETRY: '1'
+    steps:
+      - name: Check out repository without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Prepare isolated validation environment
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $venv = Join-Path $env:RUNNER_TEMP 'validation-venv'
+          python -m venv $venv
+          if ($LASTEXITCODE -ne 0) { throw 'Virtual environment creation failed.' }
+          $python = if ($IsWindows) { Join-Path $venv 'Scripts\python.exe' } else { Join-Path $venv 'bin/python' }
+          & $python -m pip --disable-pip-version-check install --require-hashes --only-binary=:all: --no-cache-dir -r tools/ci/requirements-validation.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Verified Python dependency installation failed.' }
+          & $python -B tools/ci/prepare_validation.py --workspace (Join-Path $env:RUNNER_TEMP 'native-validation')
+          if ($LASTEXITCODE -ne 0) { throw 'Verified native prerequisite preparation failed.' }
+      - name: Execute credential-free conformance, capture and native suites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $venv = Join-Path $env:RUNNER_TEMP 'validation-venv'
+          $python = if ($IsWindows) { Join-Path $venv 'Scripts\python.exe' } else { Join-Path $venv 'bin/python' }
+          & $python -B tools/ci/run_validation.py --workspace (Join-Path $env:RUNNER_TEMP 'native-validation') --report (Join-Path $env:RUNNER_TEMP 'validation-report.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Required synthetic validation failed; inspect the report and job log.' }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { throw 'Whitespace validation failed.' }
+          if (git status --porcelain) { throw 'Validation modified the checkout.' }
+      - name: Preserve minimized synthetic validation report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: validation-${{ matrix.os }}-python-${{ matrix.python }}
+          path: ${{ runner.temp }}/validation-report.json
+          if-no-files-found: warn
+          retention-days: 14

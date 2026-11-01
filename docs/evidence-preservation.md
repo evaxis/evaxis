@@ -289,20 +289,46 @@ Only finite JSON data is accepted, never scriptblocks, sessions or arbitrary
 PowerShell objects.
 
 Use a caller-approved, trusted local parent directory. Traversal components,
-explicit Windows UNC/device syntax, and symlink/reparse ancestors are rejected.
-This is not a complete network-filesystem or hostile-host detector. Existing
-destinations, even empty directories, are refused. A random sibling staging
-directory is restricted before data is written; files are flushed and synced,
-and a no-replace atomic directory rename publishes both files together.
-No partially written destination is reported as completed evidence.
+Windows UNC/device/alternate-stream and ambiguous names, mapped remote drives
+and symlink/reparse paths are rejected. Inputs must be regular files;
+Linux FIFO/device reads cannot block waiting for a writer. These checks are
+not a complete network-filesystem or hostile-host detector.
 
-Windows ACL restriction, existing-destination/race refusal, cleanup and
-reparse rejection were executed. Linux's `renameat2(RENAME_NOREPLACE)` path
-exists but was **not executed** on this Windows host; unsupported platforms
-fail explicitly. macOS publication is not implemented. PowerShell examples
-were verified on Windows, not claimed as cross-platform tested.
-Privileged local users, hostile ancestor replacement, mapped/network storage,
-crash durability and storage immutability remain limitations.
+Linux opens ancestors with directory/no-follow flags and holds their
+descriptors. Input reads, private stage/file creation, no-replace rename and
+cleanup are descriptor-relative. Windows opens verified non-reparse ancestors
+with read access and without delete sharing, preventing ordinary ancestor
+rename while the handles are held; input handles also reject final reparse
+points. This mitigates selected path-substitution races, not arbitrary
+privileged/same-identity filesystem manipulation.
+
+Existing destinations, even empty directories, are refused. Random sibling
+staging is private before payload writes: POSIX directory/file modes are
+0700/0600 at creation, and Windows staging has a restricted owner ACL.
+Files are flushed and fsynced; actual no-replace directory publication exposes
+both complete JSON files together. Linux requires `renameat2(RENAME_NOREPLACE)`
+and refuses unavailable kernel/filesystem support rather than falling back to
+an overwriting rename.
+
+Observable parent identity changes fail explicitly. Linux cleanup stays
+anchored to the original parent instead of deleting through substituted paths.
+If parent movement is detected after rename, no completion is claimed and a
+complete bundle may remain in the original parent; it is not deleted to hide
+the uncertain outcome. Cleanup failures report that incomplete private
+staging may remain. No directory-fsync or power-loss guarantee is introduced.
+
+| Configuration | Execution/support boundary |
+|---|---|
+| Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | Current isolated execution passed, including real handle/reparse/no-overwrite races and genuine native capture. |
+| CI Windows Server 2025 and Ubuntu 24.04 x64, Python 3.11/3.13 | Workflow configured; actual runner results must be recorded before claiming validation. |
+| macOS | Publication unimplemented and explicitly refused; not a validated target. |
+| Other OS/architectures/runtimes and untested filesystem configurations | Unvalidated; successful capability detection is not filesystem-trust certification. |
+| Mapped/network storage, privileged or same-identity attackers, hostile mounts, crash durability and immutable storage | Not established or supported assurance claims. |
+
+Wrapper-created Maester association tokens remain consistency checks, not
+upstream identity or attestation. The owning runspace's capture session
+remains mutable, not tamper-resistant. Packages are not promoted as suitable
+for hostile or production collection environments.
 
 No provider collector, hosted service, new storage backend, automatic upload,
 authentication/authorization layer, encryption/signing, receiver verification,
@@ -319,9 +345,17 @@ generated through the pinned native path. The original lab separately executed
 four static Pack checks and nine synthetic native rows; those are not live
 provider or end-to-end preservation checks.
 
-The existing GitHub workflow checks cARL governance only; the capture suites
-were executed locally and are not silently represented as CI tests. Local
+The original GitHub workflow still checks cARL governance only. The separate
+[capture workflow](../.github/workflows/capture-validation.yml) now executes
+the existing suites with [verified prerequisites](../tools/ci/README.md);
+configured jobs are not reported as executed without actual runner evidence.
+The current local Windows run discovered 130 Python cases, executed 121
+successfully and explicitly skipped nine Linux-only cases; the required native
+case executed. All 36 standalone PowerShell cases and conformance passed.
+Local
 cARL 1.0.2 diagnostics reported zero errors and 42 pre-existing canonical-byte
 warnings, also reproduced on unmodified baseline snapshots with LF and CRLF.
 Their cause is not established. Shared governance was not repaired or synced;
-no policy, adapter, invariant, template, pack, runtime or CI workflow changed.
+no shared policy, adapter, invariant, template, pack, runtime or original
+governance workflow was repaired or changed. Repository-owned contract/plan,
+memory and developer documentation are reconciled separately.

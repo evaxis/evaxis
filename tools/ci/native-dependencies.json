@@ -1,0 +1,15 @@
+{
+  "format": "evaxis.synthetic-ci-dependencies/0.1",
+  "maester": {
+    "repository": "https://github.com/maester365/maester",
+    "commit": "b8ad89557a831d3d3d7c369174300701243af8a6",
+    "moduleVersion": "3.0.0",
+    "moduleTreeSha256": "24ac85de14fdc9b16ff578a51b473e9a3a263704ee2af0e82b2d0c3f320ab734",
+    "trackedModuleFiles": 752
+  },
+  "graphAuthentication": {
+    "version": "2.27.0",
+    "uri": "https://www.powershellgallery.com/api/v2/package/Microsoft.Graph.Authentication/2.27.0",
+    "sha256": "7ac68868f2e12afb6c35df19542b1dfdd07b848bc69f6b45eca3a618e2143f78"
+  }
+}

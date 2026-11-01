@@ -47,6 +47,7 @@ and [initial threat-model scope](https://github.com/evaxis/architecture/blob/mai
 | `integrations/maester/` | Optional pinned synthetic native callback and execution-associated export, not a Pack or generic result importer |
 | `examples/evidence-preservation/` and `tests/capture/` | Genuinely generated golden package, offline invocation, and executable positive/adversarial tests |
 | `docs/maester-compatibility.md` | Source-verified research plus the bounded native proof; ordinary verdict rows still cannot reconstruct evidence |
+| `tools/ci/` and `.github/workflows/capture-validation.yml` | Isolated, integrity-checked Windows/Linux synthetic validation; measured configurations and residual limits, not production assurance |
 
 The [human-semantic Evidence Envelope v0.1 proposal](https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md)
 is authoritative for terminology and intended meaning. This repository owns
