@@ -315,8 +315,10 @@ class FilesystemAndCommands(unittest.TestCase):
 
     def test_input_directory_is_rejected_as_non_regular(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaisesRegex(evidence.CaptureFailure, "regular file"):
-                evidence.read_json(Path(directory))
+            with patch.object(evidence.os, "fdopen") as fdopen:
+                with self.assertRaisesRegex(evidence.CaptureFailure, "regular file"):
+                    evidence.read_json(Path(directory))
+            fdopen.assert_not_called()
 
     def test_competing_processes_publish_exactly_one_complete_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

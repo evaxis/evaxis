@@ -240,9 +240,10 @@ def read_json(path: Path) -> Any:
                     safe.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
                     dir_fd=parent_fd,
                 )
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                os.close(fd)
+                raise CaptureFailure("JSON input must be a regular file")
             with os.fdopen(fd, "rb") as stream:
-                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
-                    raise CaptureFailure("JSON input must be a regular file")
                 data = stream.read(MAX_BYTES + 1)
     except OSError as exc:
         raise CaptureFailure("cannot read JSON input") from exc
