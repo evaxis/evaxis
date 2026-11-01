@@ -2,8 +2,12 @@
 
 ## Contract status and goal
 
-Active - explicitly approved bounded remediation, validation, branch push and
-PR delivery against `main`. Reviewed/start head is
+Completed - the explicitly approved bounded remediation is implemented and
+validated on all four runners at `53571d64dbf4fb61ff5180e11058c66f62b3c009`.
+[Capture execution and aggregate](https://github.com/evaxis/evaxis/actions/runs/41341886934)
+and [governance](https://github.com/evaxis/evaxis/actions/runs/41341886928)
+passed. [PR #4](https://github.com/evaxis/evaxis/pull/4) is open against `main`;
+no merge is authorized or performed. Reviewed/start head is
 `321cbea0e059bc68c722efd8438d8eb75945b932` on
 `goldjg-portable-capture-hardening`; fetched `main` remains
 `0505243eb0cb71a2a65a3795dfef4c1104f73c64`. Preserve the completed
@@ -42,7 +46,8 @@ shared governance repair is authorized.
    to API callers and CLI; no evidence/path values leak.
 2. Cleanup-only failure is explicit, every cleanup is attempted, no uncertain
    publication reports success, no published destination is deleted, and
-   no-replace/descriptor/protected-handle semantics are unchanged.
+   no-replace/descriptor/protected-handle semantics are unchanged. Successful
+   local bodies must not inherit an unrelated caller's handled exception.
 3. The aggregate always runs after the four-job matrix and fails for failed,
    cancelled, skipped, neutral or missing execution; exact four fresh reports
    and mandatory-native/trust results are required.
@@ -82,3 +87,12 @@ Update docs/memory for error provenance and execution gate behavior; retain
 historical results as historical. Preserve shared managed assets unchanged.
 Close with verified final CI/PR and actual rule read-back. Future implementation,
 policy changes or merge require a new approved scope.
+
+Effective read-back confirmed the six GitHub Actions-bound checks, strict
+up-to-date/PR-only rules, no bypass actors and zero required approvals.
+The full suite discovered 147 cases per runner: Windows executed 136 with
+11 Linux-only skips; Linux executed 143 with four Windows-only skips. All
+executed cases, conformance, 36 PowerShell cases and mandatory native proof
+passed. The final delivery report records the documentation head and its own
+fresh PR checks; this code-execution snapshot remains explicit historical
+evidence, not authorization for future implementation or merge.

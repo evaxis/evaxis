@@ -177,6 +177,9 @@ Publication/integrity errors remain primary when staging or retained-handle
 cleanup also fails. Safe secondary cleanup diagnostics are Python 3.11
 exception notes, separately printed by the CLI; cleanup-only errors still
 fail, and no published destination is removed to conceal uncertainty.
+Local body completion distinguishes cleanup-only errors from an unrelated
+caller's already-handled exception; ambient `sys.exception()` alone cannot
+identify the operation's primary failure.
 The final review adds `Capture validation gate`, an always-run aggregate
 requiring a successful matrix dependency and the exact four fresh mandatory-
 native reports. Ordinary GitHub required checks accept skipped/neutral

@@ -15,7 +15,7 @@ foundations packs were hydrated. Historical hardening contract is completed,
 not authorization for new work; the new contract records explicit PR and
 additive-ruleset permission.
 
-F1 confirmed: effective ruleset 26000155 requires only `cARL governance`.
+F1 confirmed: effective ruleset 26000155 initially required only `cARL governance`.
 It is active, strict, PR-only, has no bypass actors and requires zero approvals.
 GitHub accepts skipped/neutral required checks, so adding matrix names alone
 does not prove successful execution. Repository-admin permission is available;
@@ -36,7 +36,8 @@ uncertainty correctly retains the published bundle and must remain intact.
    Keep actual rename/no-follow/handle/permission operations unchanged.
 2. `tests/capture/test_capture.py`: publication failure with successful cleanup,
    primary-plus-cleanup failure, post-rename uncertainty, cleanup-only failure,
-   descriptor/ancestor close provenance, sanitized CLI and clean success.
+   descriptor/ancestor close provenance, unrelated caller exception context,
+   sanitized CLI and clean success.
 3. `.github/workflows/capture-validation.yml`, `tools/ci/check_validation_gate.py`
    and focused gate tests: always-run aggregate requires successful matrix
    dependency plus exactly four successful fresh reports and required native
@@ -73,3 +74,26 @@ Record real execution/required-check conclusions and residual limits in direct
 docs and a saved completion report. Keep the 42 historical warnings/five
 harness drifts unrepaired. Close the contract only after final verification;
 do not merge or promote hostile/production suitability.
+
+## Execution and reconciliation
+
+The additive policy was applied with concurrent-state and preservation checks;
+effective read-back requires all six named GitHub Actions checks with the
+existing strict/PR-only/no-bypass protections and no approval deadlock.
+Primary/secondary diagnostics were corrected without changing publication
+primitives. A further regression exposed `sys.exception()` inheriting a
+caller's already-handled exception: locally successful bodies now distinguish
+their own cleanup-only failures instead of annotating that unrelated error.
+
+At code head `53571d64dbf4fb61ff5180e11058c66f62b3c009`,
+[all four runners and aggregate passed](https://github.com/evaxis/evaxis/actions/runs/41341886934):
+147 discovered; Windows 136 executed/11 Linux-only skips; Linux 143 executed/
+four Windows-only skips; zero errors/failures. Conformance, 36 PowerShell
+cases and actual native Maester execution passed on each. Local Windows
+also passed 29 focused cases and the complete isolated suite.
+[Governance passed](https://github.com/evaxis/evaxis/actions/runs/41341886928).
+cARL diagnostics retain the separate 42 warnings/five harness drifts.
+
+The contract is closed and direct docs/memory are reconciled. PR #4 remains
+open and unmerged; final documentation-head checks and protection read-back
+are recorded in the saved delivery report.

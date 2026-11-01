@@ -327,12 +327,14 @@ staging deletion, staging-descriptor close or retained ancestor-handle close
 also fails. Additional cleanup failures are fixed, sanitized Python 3.11+
 exception notes (`__notes__`); CLI diagnostics print those notes separately.
 A cleanup-only failure is itself an explicit error, not successful publication.
+This remains true inside an unrelated caller exception handler; successful
+local bodies do not adopt that handled exception as a primary failure.
 Remaining cleanup is still attempted. A successfully renamed destination is
 never deleted to hide an uncertain parent check or close failure.
 
 | Configuration | Execution/support boundary |
 |---|---|
-| Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | Current isolated execution passed, including real handle/reparse/no-overwrite races and genuine native capture. |
+| Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | Original hardening isolated execution passed, including real handle/reparse/no-overwrite races and genuine native capture. |
 | CI Windows Server 2025 x64, NTFS, PowerShell 7.6.7, Python 3.11.9/3.13.16 | Both actual jobs passed: 130 Python cases discovered, 121 executed and nine Linux-only skips; conformance, 36 PowerShell cases and genuine native capture passed. |
 | CI Ubuntu 24.04 x64, PowerShell 7.6.9, Python 3.11.17/3.13.17 | Both actual jobs passed: 130 Python cases discovered, 126 executed and four Windows-only skips; conformance, 36 PowerShell cases and genuine native capture passed, including real Linux no-replace publication. |
 | macOS | Publication unimplemented and explicitly refused; not a validated target. |
@@ -375,7 +377,7 @@ the linked four-job run executed the final code on both platforms.
 An earlier Linux run exposed directory descriptors reaching `fdopen` before
 regular-file validation. The implementation now checks and closes non-regular
 descriptors first; the strengthened regression passed on all four jobs.
-The current local Windows run discovered 130 Python cases, executed 121
+The original hardening local Windows run discovered 130 Python cases, executed 121
 successfully and explicitly skipped nine Linux-only cases; the required native
 case executed. All 36 standalone PowerShell cases and conformance passed.
 cARL 1.0.2 diagnostics exited successfully but retained 42 pre-existing warnings
@@ -393,3 +395,18 @@ configuration requires all four capture names plus the aggregate, preserving
 strict, PR-only/no-bypass protections and zero required approvals. Current
 effective read-back and final execution evidence belong to the PR report;
 green historical runs alone do not demonstrate merge enforcement.
+
+Final-review code head `53571d64dbf4fb61ff5180e11058c66f62b3c009`
+passed [fresh four-job execution and aggregate](https://github.com/evaxis/evaxis/actions/runs/41341886934)
+and [governance](https://github.com/evaxis/evaxis/actions/runs/41341886928).
+Each job discovered 147 Python cases: Windows executed 136 with 11 Linux-only
+skips; Ubuntu executed 143 with four Windows-only skips. No executed case
+failed; conformance, all 36 PowerShell cases and actual native Maester proof
+passed on every job. These include eight failure-provenance and nine aggregate
+regressions. A caller-handler regression initially failed, exposing ambiguous
+ambient exception context; local completion tracking corrected it before this
+execution. Windows measured image `20261021.278.1`, PowerShell 7.6.7 and NTFS;
+Ubuntu measured image `20261026.354.1`, PowerShell 7.6.9, kernel
+`7.0.0-1017-azure` and filesystem family `ext2/ext3`. Python patch versions
+remain those in the original matrix table. This is bounded runner evidence,
+not expanded filesystem or hostile/production qualification.
