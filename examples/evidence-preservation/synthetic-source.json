@@ -1,0 +1,68 @@
+{
+  "synthetic": true,
+  "fixtureVersion": "1",
+  "source": {
+    "authority": "urn:evaxis:synthetic-source",
+    "scopeId": "synthetic-workspace",
+    "sourceSystem": "offline-policy-fixture",
+    "sourceVersion": "1"
+  },
+  "requestedScope": {
+    "authority": "urn:evaxis:synthetic-source",
+    "scopeId": "synthetic-workspace",
+    "scopeType": "synthetic-workspace",
+    "description": "Only the three explicitly declared synthetic policy candidates."
+  },
+  "observationSchema": {
+    "id": "urn:evaxis:synthetic-schema:policy",
+    "version": "1"
+  },
+  "clockBasis": "Historical source times are explicit synthetic fixture values, not reconstructed collection events; no source clock trust is asserted.",
+  "objects": [
+    {
+      "target": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-001",
+        "displayName": "Synthetic policy",
+        "kind": "synthetic-policy",
+        "lifecycle": {"state": "active", "basis": "direct-observation"}
+      },
+      "availability": "available",
+      "observedAt": "2026-01-02T03:03:00Z",
+      "representation": {
+        "encoding": "source-native",
+        "mediaType": "application/json",
+        "content": {"enabled": true, "sourceRevision": 1}
+      }
+    },
+    {
+      "target": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-002",
+        "displayName": "Synthetic policy",
+        "kind": "synthetic-policy",
+        "lifecycle": {"state": "active", "basis": "direct-observation"}
+      },
+      "availability": "available",
+      "observedAt": "2026-01-02T03:04:00+00:00",
+      "representation": {
+        "encoding": "source-native",
+        "mediaType": "application/json",
+        "content": {"enabled": false, "sourceRevision": 2}
+      }
+    },
+    {
+      "target": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-003",
+        "displayName": "Unavailable synthetic policy",
+        "kind": "synthetic-policy",
+        "lifecycle": {"state": "unknown", "basis": "unknown"}
+      },
+      "availability": "unavailable"
+    }
+  ]
+}

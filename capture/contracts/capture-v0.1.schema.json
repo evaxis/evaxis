@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evaxis:schema:capture:0.1",
+  "title": "Experimental Evaxis evidence capture v0.1",
+  "description": "Provider-neutral capture data, separate from the proposed Evidence Envelope schemas. This experiment does not constitute architectural approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "captureContractVersion", "envelopeContractVersion", "collectionRunId",
+    "state", "collector", "source", "requestedScope", "startedAt",
+    "inventory", "sourceAttempts", "observations", "notObserved", "assessments"
+  ],
+  "properties": {
+    "captureContractVersion": {"const": "0.1"},
+    "envelopeContractVersion": {"const": "0.1"},
+    "collectionRunId": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "\\S"},
+    "state": {"enum": ["collecting", "completed"]},
+    "collector": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/producer"},
+    "source": {"$ref": "urn:evaxis:schema:observation:0.1#/properties/source"},
+    "requestedScope": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/scope"},
+    "startedAt": {"type": "string", "format": "date-time"},
+    "completedAt": {"type": "string", "format": "date-time"},
+    "collectionStatus": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/properties/collectionStatus"},
+    "coverageStatus": {"enum": ["complete", "partial", "unknown"]},
+    "collectorConfiguration": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/properties/collectorConfiguration"},
+    "frameworkContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "id", "version", "executionId"],
+      "properties": {
+        "authority": {"$ref": "#/$defs/identifier"},
+        "id": {"$ref": "#/$defs/identifier"},
+        "version": {"$ref": "#/$defs/identifier"},
+        "executionId": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "basis", "expectedTargets"],
+      "properties": {
+        "status": {"enum": ["known", "unknown"]},
+        "basis": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S"},
+        "expectedTargets": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/targetReference"}
+        }
+      }
+    },
+    "sourceAttempts": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attemptId", "collectionRunId", "intendedScope", "intendedTargets", "startedAt", "status"],
+        "properties": {
+          "attemptId": {"$ref": "#/$defs/identifier"},
+          "collectionRunId": {"$ref": "#/$defs/identifier"},
+          "intendedScope": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/scope"},
+          "intendedTargets": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/targetReference"}
+          },
+          "startedAt": {"type": "string", "format": "date-time"},
+          "completedAt": {"type": "string", "format": "date-time"},
+          "status": {"enum": ["in-progress", "succeeded", "failed", "unsupported", "unavailable", "denied", "malformed", "not-attempted"]},
+          "limitation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "description"],
+            "properties": {
+              "code": {"$ref": "#/$defs/identifier"},
+              "description": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S"}
+            }
+          },
+          "visibilityConstraints": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/properties/visibilityConstraints"}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "in-progress"}}, "required": ["status"]},
+            "then": {"not": {"required": ["completedAt"]}},
+            "else": {"required": ["completedAt"]}
+          }
+        ]
+      }
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["record", "attemptId", "capturedAt", "observedAtProvenance", "transformations"],
+        "properties": {
+          "record": {
+            "allOf": [
+              {"$ref": "urn:evaxis:schema:observation:0.1"},
+              {
+                "properties": {
+                  "observationId": {"$ref": "#/$defs/identifier"},
+                  "observationType": {"$ref": "#/$defs/identifier"},
+                  "target": {"required": ["kind"], "properties": {"kind": {"$ref": "#/$defs/identifier"}}}
+                }
+              }
+            ]
+          },
+          "attemptId": {"$ref": "#/$defs/identifier"},
+          "capturedAt": {"type": "string", "format": "date-time"},
+          "observedAtProvenance": {"$ref": "#/$defs/timeProvenance"},
+          "transformations": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["model", "inputReferences", "outputReference", "description", "lossy"],
+              "properties": {
+                "model": {"$ref": "urn:evaxis:schema:assessment-result:0.1#/$defs/versionedIdentity"},
+                "inputReferences": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+                "outputReference": {"$ref": "#/$defs/identifier"},
+                "description": {"type": "string", "minLength": 1, "maxLength": 2048},
+                "lossy": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "notObserved": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "reason", "attemptId", "recordedAt"],
+        "properties": {
+          "target": {"$ref": "urn:evaxis:schema:collection-manifest:0.1#/$defs/targetReference"},
+          "reason": {"enum": ["denied", "unavailable", "unsupported", "not-attempted", "unknown"]},
+          "attemptId": {"$ref": "#/$defs/identifier"},
+          "recordedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "assessments": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["record", "collectionRunId", "recordedAt", "assessedAtProvenance"],
+        "properties": {
+          "record": {
+            "allOf": [
+              {"$ref": "urn:evaxis:schema:assessment-result:0.1"},
+              {
+                "properties": {
+                  "assessmentId": {"$ref": "#/$defs/identifier"},
+                  "inputBasis": {"properties": {"rationale": {"type": "string", "pattern": "\\S"}}}
+                }
+              }
+            ]
+          },
+          "collectionRunId": {"$ref": "#/$defs/identifier"},
+          "recordedAt": {"type": "string", "format": "date-time"},
+          "assessedAtProvenance": {"$ref": "#/$defs/timeProvenance"},
+          "frameworkAssociation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["executionId", "invocationId", "collectionRunId", "recordId", "resultClaim"],
+            "properties": {
+              "executionId": {"$ref": "#/$defs/identifier"},
+              "invocationId": {"$ref": "#/$defs/identifier"},
+              "collectionRunId": {"$ref": "#/$defs/identifier"},
+              "recordId": {"$ref": "#/$defs/identifier"},
+              "resultClaim": {"$ref": "#/$defs/identifier"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"state": {"const": "completed"}}, "required": ["state"]},
+      "then": {
+        "required": ["completedAt", "collectionStatus", "coverageStatus"],
+        "properties": {
+          "sourceAttempts": {
+            "minItems": 1,
+            "items": {
+              "required": ["completedAt"],
+              "properties": {"status": {"not": {"const": "in-progress"}}}
+            }
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {"required": ["completedAt"]},
+            {"required": ["collectionStatus"]},
+            {"required": ["coverageStatus"]}
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"},
+    "timeProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "clockBasis"],
+      "properties": {
+        "origin": {"enum": ["source-reported", "collector-observed", "synthetic-fixture", "evaluator-event", "framework-event", "caller-supplied"]},
+        "clockBasis": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S"}
+      }
+    }
+  }
+}

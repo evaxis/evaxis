@@ -8,6 +8,7 @@ import copy
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
@@ -116,6 +117,30 @@ class ValidationFailure(Exception):
     """Raised for invalid repository fixture or schema metadata."""
 
 
+def evidence_format_checker() -> FormatChecker:
+    checker = FormatChecker()
+
+    @checker.checks("date-time")
+    def date_time(value: Any) -> bool:
+        if not isinstance(value, str):
+            return True
+        if not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+            r"(?:[Zz]|[+-]\d{2}:[0-5]\d)",
+            value,
+        ):
+            return False
+        try:
+            datetime.fromisoformat(
+                value.replace("t", "T").replace("z", "Z").replace("Z", "+00:00")
+            )
+        except ValueError:
+            return False
+        return True
+
+    return checker
+
+
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -168,7 +193,7 @@ def validate_schemas() -> dict[str, dict[str, Any]]:
 
 
 def validate_schema_fixtures(schemas: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    format_checker = FormatChecker()
+    format_checker = evidence_format_checker()
     valid_dir = FIXTURE_DIR / "schema-valid"
     invalid_dir = FIXTURE_DIR / "schema-invalid"
     valid_files = sorted(valid_dir.glob("*.json"))
@@ -271,8 +296,13 @@ def target_set(targets: list[dict[str, Any]], label: str) -> set[tuple[str, str,
 def validate_package(records: dict[str, Any]) -> None:
     envelope = records["envelope"]
     manifest = records["manifest"]
-    observations = [records["observation"]]
-    assessments = [records["assessment"]]
+    observations = records["observations"] if "observations" in records else [records["observation"]]
+    assessments = records["assessments"] if "assessments" in records else [records["assessment"]]
+
+    if any(record["contractVersion"] != "0.1" for record in (
+        envelope, manifest, *observations, *assessments
+    )):
+        raise ValidationFailure("package records must use contractVersion 0.1")
 
     if envelope["manifestId"] != manifest["manifestId"]:
         raise ValidationFailure("envelope manifestId does not resolve")
@@ -319,6 +349,15 @@ def validate_package(records: dict[str, Any]) -> None:
             or observation["source"]["scopeId"] != target["scopeId"]
         ):
             raise ValidationFailure("observation source authority/scope does not match its target")
+        if any(
+            observation["collector"][key] != manifest["collector"][key]
+            for key in ("authority", "id", "version")
+        ):
+            raise ValidationFailure("observation collector does not match package manifest")
+        if observation["source"]["authority"] not in {
+            attempt["authority"] for attempt in manifest["sourceAttempts"]
+        }:
+            raise ValidationFailure("observation source has no declared source attempt")
         observation_targets.add(target_key(target))
     if observation_targets != observed:
         raise ValidationFailure("manifest observedTargets do not match package observation targets")
@@ -340,6 +379,24 @@ def validate_package(records: dict[str, Any]) -> None:
                 raise ValidationFailure("observation-based assessment has no subject-matching observation")
         if basis["kind"] == "external-references" and not basis.get("externalReferences"):
             raise ValidationFailure("external-reference assessment basis is empty")
+        control = assessment["controlCoverage"]
+        assessed = target_set(control["assessedSubjects"], "assessedSubjects")
+        unassessed = target_set(
+            [item["target"] for item in control["unassessedSubjects"]],
+            "unassessedSubjects",
+        )
+        if assessed & unassessed:
+            raise ValidationFailure("control coverage subjects overlap")
+        if control["status"] == "complete" and unassessed:
+            raise ValidationFailure("complete control coverage has unassessed subjects")
+        if assessment["executionStatus"] != "completed" and assessment["outcome"] != "unknown":
+            raise ValidationFailure("non-completed assessment must have unknown outcome")
+        if assessment["outcome"] in {"pass", "fail"} and (
+            basis["kind"] == "no-input"
+            or control["status"] == "unknown"
+            or target_key(assessment["subject"]) not in assessed
+        ):
+            raise ValidationFailure("conclusion requires legitimate input and assessed subject")
 
 
 def validate_package_negative_cases(
@@ -530,11 +587,19 @@ def repository_text_files() -> list[Path]:
         ROOT / "schemas",
         ROOT / "tests/conformance",
         ROOT / "tools",
+        ROOT / "capture",
+        ROOT / "integrations",
+        ROOT / "examples/evidence-preservation",
+        ROOT / "tests/capture",
+        ROOT / "docs",
     ):
         paths.extend(directory.rglob("*.md"))
         paths.extend(directory.rglob("*.json"))
         paths.extend(directory.rglob("*.py"))
         paths.extend(directory.rglob("*.txt"))
+        paths.extend(directory.rglob("*.ps1"))
+        paths.extend(directory.rglob("*.psm1"))
+        paths.extend(directory.rglob("*.psd1"))
     return sorted(set(path for path in paths if path.is_file()))
 
 
