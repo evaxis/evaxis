@@ -2,8 +2,10 @@
 
 ## Contract status
 
-Active - explicitly approved for Core-only implementation and branch push
-for actual Windows/Linux CI execution. No PR creation or merge is authorized.
+Closed - approved Core-only implementation and actual Windows/Linux execution
+completed. Final documentation/branch validation belongs to this closure;
+this contract authorizes no subsequent implementation. No PR was created and
+no merge is authorized.
 This supersedes the closed preservation experiment, now merged in
 [Core #3](https://github.com/evaxis/evaxis/pull/3). Verified starting `main` is
 `0505243eb0cb71a2a65a3795dfef4c1104f73c64`.
@@ -58,8 +60,9 @@ PowerShell export changes require a concrete coupled boundary failure.
 
 1. Existing schemas, lineage, coverage, source identity/time semantics and
    receiver/source-truth report values remain unchanged.
-2. Unsafe input paths/files cannot redirect reads or block on FIFOs/devices;
-   no-follow and ancestor-substitution regressions execute per platform.
+2. Unsafe input paths cannot redirect reads; non-regular descriptors are
+   rejected before JSON reading and FIFO opens do not wait for a writer.
+   No-follow and ancestor-substitution regressions execute per platform.
 3. Actual Linux `renameat2(RENAME_NOREPLACE)` and Windows rename preserve
    competitor destinations and expose complete bundles only.
 4. Private permissions, pinned cleanup and explicit failure semantics survive
@@ -99,6 +102,22 @@ Update docs and repository-owned memory for concrete defenses, commands and
 measured platform-specific results. Preserve shared managed governance
 byte-for-byte. Close with persistent commit state and exact executed/unexecuted
 evidence, not PR submission or approval of architecture.
+
+Implementation `a417d5734e59162b0a069e40b56130e25e8c865c` passed
+[all four real CI jobs](https://github.com/evaxis/evaxis/actions/runs/41337237522).
+Each Windows job executed 121 Python cases with nine Linux-only skips; each
+Linux job executed 126 with four Windows-only skips, out of 130 discovered.
+Every configuration passed conformance, 36 standalone PowerShell cases and
+required native capture. Linux's actual no-replace/path/race cases and
+Windows's actual handle/reparse/rename cases executed. Local isolated Windows
+execution also passed with required native capture.
+
+Developer docs, this plan/contract and repository-owned memory record exact
+tested configurations, observed filesystem labels, concrete mitigations and
+remaining limitations. No Architecture amendment was needed or made.
+Existing schemas, integrations, historical lab and shared managed governance
+remain unchanged. The 42 pre-existing local cARL warnings and five drifted
+harness adapters remain unexplained and unrepaired.
 
 ## Context reset
 

@@ -12,7 +12,9 @@ Use Python 3.11+, PowerShell 7.4+, and `requirements-dev.txt`; see
 [fresh-checkout prerequisites](../../docs/evidence-preservation.md).
 From the repository root, use `$python` from that prerequisite setup. For an
 already configured environment, set `$python` to your trusted Python executable
-(for example, `$python = (Get-Command python -ErrorAction Stop).Source`):
+(for example, `$python = (Get-Command python -ErrorAction Stop).Source`).
+The commands below use Windows paths; the isolated runner provides portable
+Windows/Linux reproduction with verified prerequisites.
 
 ```powershell
 $env:PYTHONDONTWRITEBYTECODE = '1'
@@ -109,13 +111,30 @@ preserved in per-job minimized JSON reports.
 | Current execution | Result |
 |---|---|
 | Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | 130 Python cases discovered; 121 executed successfully; nine Linux-only skips. Genuine native golden executed; conformance and 36 PowerShell cases passed. |
-| CI Windows/Linux matrix | Configured, not yet execution evidence; record actual runs before claiming platform validation. |
+| CI Windows Server 2025 x64, NTFS, Python 3.11.9/3.13.16, PowerShell 7.6.7 | Both jobs passed: 130 discovered, 121 executed, nine Linux-only skips; conformance, 36 PowerShell cases and genuine native golden passed. |
+| CI Ubuntu 24.04 x64, Python 3.11.17/3.13.17, PowerShell 7.6.9 | Both jobs passed: 130 discovered, 126 executed, four Windows-only skips; conformance, 36 PowerShell cases and genuine native golden passed. |
+
+The [four-job execution evidence](https://github.com/evaxis/evaxis/actions/runs/41337237522)
+belongs to final implementation commit
+`a417d5734e59162b0a069e40b56130e25e8c865c`. Measured runner images were
+Windows `20261021.278.1` and Ubuntu `20261026.354.1`. Linux reported kernel
+`7.0.0-1017-azure` and `stat -f -c %T` filesystem family `ext2/ext3`, not a
+verified exact ext4 configuration. The Linux no-replace syscall, final-link/
+ancestor replacement, FIFO and competing-publisher cases actually executed.
+
+The initial Linux run found a directory-descriptor diagnostic/ownership gap.
+Regular-file validation now precedes `fdopen`; the regression asserts no
+stream is constructed for a directory and passed on all four configurations.
 
 Additional regressions prove selected final-link and ancestor replacement
 defenses, private file creation, regular-file/FIFO input rejection, concurrent
 publisher winner preservation, safe anchored cleanup, explicit fsync/rename/
 cleanup failures, unsupported publication refusal, dependency checksum tamper,
 unsafe archives and actual extracted-byte verification.
+The native test checks fresh output for exactly two observations and three
+assessments, preserved source representations/timestamp strings/targets,
+expected pass/fail/unknown conclusions and unchanged receiver/source-truth
+values. Native-handle and temporary-directory cleanup failures are explicit.
 Windows and Linux-specific skips are listed explicitly, not counted as passes.
 The Linux class must execute its actual libc no-replace path on Linux; mocked
 unsupported-primitive tests do not substitute for that execution.

@@ -2,8 +2,8 @@
 
 ## Status and goal
 
-Approved for implementation and branch push for actual CI execution. Follow
-the current PR contract; no PR creation, merge, release or tenant access.
+Completed within the approved Core-only implementation and branch-push scope.
+No PR creation, merge, release or tenant access occurred.
 Start from merged Core #3, commit
 `0505243eb0cb71a2a65a3795dfef4c1104f73c64`.
 
@@ -59,7 +59,8 @@ reviewable commits on one branch. No stacked PRs or additional app sessions.
 1. Unchanged schemas, record/lineage/coverage semantics and trust outputs:
    conformance, existing mutation/positive tests and explicit receiver/source
    claim assertions run on every matrix configuration.
-2. Unsafe input cannot redirect reads or block on non-regular files:
+2. Unsafe input cannot redirect reads; non-regular descriptors are rejected
+   before JSON reading and FIFO opens do not wait for a writer:
    final symlink/reparse, ancestor substitution, traversal/stream/device,
    regular-file and diagnostic negative tests execute on relevant platforms.
 3. Atomic no-replace publication preserves competitors and complete files:
@@ -101,3 +102,30 @@ configuration-specific validation and concrete defenses. Do not promote
 historical Windows-only claims or unexecuted Linux paths into general support.
 Close the contract with exact executed/unexecuted results; preserve remaining
 limitations and distinguish CI, local, static and skipped evidence.
+
+## Executed evidence and reconciliation
+
+Implementation commit `a417d5734e59162b0a069e40b56130e25e8c865c` passed
+[all four actual CI jobs](https://github.com/evaxis/evaxis/actions/runs/41337237522).
+Windows Server 2025/NTFS ran Python 3.11.9 and 3.13.16 with PowerShell 7.6.7:
+121 executed cases and nine Linux-only skips per job. Ubuntu 24.04 ran Python
+3.11.17 and 3.13.17 with PowerShell 7.6.9: 126 executed cases and four
+Windows-only skips per job. Every job discovered 130 cases, passed conformance
+and 36 standalone PowerShell cases, and executed the required native golden.
+Fresh native output retained exactly two observations, three assessments,
+source values/timestamp strings/targets and unchanged trust-report values.
+
+Actual Linux no-replace, ancestor/final-link replacement, FIFO and competing
+publisher cases ran; Windows real handle/reparse/rename cases ran.
+An initial Linux directory-descriptor failure was fixed before stream
+construction and revalidated, not skipped or counted as passing.
+The local isolated Windows run also passed 121 cases, conformance, 36
+PowerShell cases and required native execution with nine Linux-only skips.
+Developer docs preserve exact runner/image/filesystem metadata and CI links.
+
+Docs, repository-owned memory, plan and contract are reconciled. Shared
+managed governance, schemas, integrations, historical lab and Architecture
+remain unchanged; no Architecture amendment is required for these bounded
+implementation claims. The 42 pre-existing local cARL warnings and five drifted
+harness adapters remain unexplained and unrepaired. All residual
+hostile-host/attestation/session/receiver/durability limits remain explicit.
