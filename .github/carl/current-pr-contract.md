@@ -1,110 +1,98 @@
-# Evidence preservation v0.1 synthetic implementation
+# Portable capture final review and PR delivery
 
-## Contract status
+## Contract status and goal
 
-Closed - implemented, validated, and submitted for review in
-[Core #3](https://github.com/evaxis/evaxis/pull/3), without merge.
-This contract explicitly supersedes the closed compatibility-remediation
-contract. Core PR #2 and Architecture PR #4 are merged, verified on
-2026-11-01. Latest Core `main` is
-`ab0a259cb20762da312c27479286fdbd51af1be3`.
+Completed - the explicitly approved bounded remediation is implemented and
+validated on all four runners at `53571d64dbf4fb61ff5180e11058c66f62b3c009`.
+[Capture execution and aggregate](https://github.com/evaxis/evaxis/actions/runs/41341886934)
+and [governance](https://github.com/evaxis/evaxis/actions/runs/41341886928)
+passed. [PR #4](https://github.com/evaxis/evaxis/pull/4) is open against `main`;
+no merge is authorized or performed. Reviewed/start head is
+`321cbea0e059bc68c722efd8438d8eb75945b932` on
+`goldjg-portable-capture-hardening`; fetched `main` remains
+`0505243eb0cb71a2a65a3795dfef4c1104f73c64`. Preserve the completed
+[hardening plan](plans/portable-capture-hardening.md).
+The current plan is [final-review-delivery.md](plans/final-review-delivery.md).
 
-## Goal and approved scope
+Verify F1 (execution merge enforcement) and F2 (cleanup masking primary
+failure), correct only confirmed gaps, execute the supported matrix and open
+a reviewable PR. The new user request explicitly supersedes the historical
+no-PR constraint, not the schema/trust/security limitations.
 
-Implement the credential-free proof: synthetic source, reusable evidence
-helper, Maester-native assessment, Evidence Envelope v0.1, and conformance
-validation. The linked plan is
-[evidence-preservation-v0.1.md](plans/evidence-preservation-v0.1.md).
+## Approved scope, files and permission checkpoint
 
-Authorized scope includes a separate versioned provider-neutral capture
-contract, replaceable PowerShell helper, package assembly, generalization of
-the existing validator to multiple records, synthetic Maester glue, golden
-package, positive/adversarial tests, developer documentation, and durable
-repository-owned memory reconciliation. This bounded experimental
-implementation is explicitly authorized; it selects no product stack,
-licence, hosting service, storage backend, or approved architectural contract.
+Tier 0: repository/remote inspection and cARL/rules/check diagnostics.
+Tier 1: `capture/package.py`, `tests/capture/test_capture.py`, a bounded gate
+checker/regressions in `tools/ci/` and `tests/capture/`, directly related
+README/docs and repository-owned memory/contract/plans.
+Tier 2: focused capture workflow gate, additive required checks in existing
+`main-foundations` ruleset 26000155, branch pushes/CI and PR creation/update.
+The user explicitly authorized the additive ruleset/aggregate gate:
+preserve all existing protections and verify failed/cancelled/skipped/missing
+matrix execution cannot produce gate success. No merge is authorized.
 
-## Non-goals and forbidden scope
-
-No changes to existing Evidence Envelope schemas, Architecture, ADR 0002,
-shared cARL policy/invariants/templates/packs/adapters/runtime, CI workflows,
-or unrelated repositories. No tenant connection, credentials, real evidence,
-automatic evidence upload, Pack publication, release, merge, comparison
-engine, receiver verification, or cryptographic assurance claims.
-
-Evidence Envelope v0.1 remains Proposed, pending explicit architectural
-approval. Architecture owns a separate proposed preservation contract/ADR.
-The distinct proposal is
-[evaxis/architecture#5](https://github.com/evaxis/architecture/pull/5).
-Core interface choices are experimental and must remain aligned with that
-proposal and the unchanged v0.1 semantic authority.
-
-## Expected files
-
-- `.github/carl/current-pr-contract.md`
-- `.github/carl/plans/evidence-preservation-v0.1.md`
-- `.github/carl/memory.md`
-- `capture/`
-- `integrations/powershell/`
-- `integrations/maester/`
-- `examples/evidence-preservation/`
-- `tests/capture/`
-- `tools/validate_conformance.py`
-- `tests/conformance/README.md`
-- `docs/evidence-preservation.md`
-- `docs/maester-compatibility.md`
-- `docs/getting-started.md`
-- `README.md`
+Preserve strict up-to-date checks, GitHub Actions source binding, PR-only
+updates, empty bypass actors, zero required approvals, review-thread resolution,
+deletion/non-fast-forward protections and existing merge methods.
+Read live state immediately before ruleset mutation; stop on concurrent
+unexpected policy changes. Save prior state and verify effective read-back.
+No Actions permission expansion, dependency/upstream pin/hash changes or
+shared governance repair is authorized.
 
 ## Contract assertions and validation
 
-1. Capture preserves actual run/attempt/capture events separately from
-   caller-supplied source times and authority/scope/native target identity.
-2. Explicit lifecycle and run associations reject duplicate identifiers,
-   unresolved attempts, repeated completion, cross-run evidence, and
-   contradictory collection/coverage claims.
-3. Assessments preserve precise evidence references and subject, independent
-   rule/evaluator versions, timing basis, execution state, conclusion, input
-   basis, and control coverage; missing/denied evidence is not control Fail.
-4. Assembly preserves capture lineage and produces complete multi-record
-   packages validated by the unchanged v0.1 schemas and strengthened
-   consistency checks; producer verification never becomes receiver trust.
-5. Synthetic Maester execution captures facts before the native result loses
-   them, binds the execution-associated export by explicit run identity,
-   and never reconstructs source facts from verdicts or Markdown.
+1. Primary publication/integrity failure remains primary when staging or
+   protected-handle cleanup also fails. Additional fixed safe notes are visible
+   to API callers and CLI; no evidence/path values leak.
+2. Cleanup-only failure is explicit, every cleanup is attempted, no uncertain
+   publication reports success, no published destination is deleted, and
+   no-replace/descriptor/protected-handle semantics are unchanged. Successful
+   local bodies must not inherit an unrelated caller's handled exception.
+3. The aggregate always runs after the four-job matrix and fails for failed,
+   cancelled, skipped, neutral or missing execution; exact four fresh reports
+   and mandatory-native/trust results are required.
+4. Effective main rules require cARL, all four exact matrix check names and
+   the aggregate from GitHub Actions. Existing no-bypass/strict/PR-only
+   protections remain. Do not exercise a bypass or direct push against main.
+5. Fresh Windows Server 2025/Ubuntu 24.04 x64 Python 3.11/3.13 execution passes
+   all existing and new regressions, conformance, 36 PowerShell cases and
+   genuine native proof; actual counts/skips/images and links are recorded.
 
-## Trust boundaries and stop conditions
+Run focused regressions, then the isolated local Windows runner and full actual
+CI matrix. Run cARL 1.0.2 diagnostics and unchanged governance. Save exact
+completion evidence as a session document and provide its relative path,
+final SHA, PR URL and CI links to the coordinator.
 
-All payloads, JSON, paths, and imported native results are untrusted. Limit
-input size/depth, avoid raw evidence in diagnostics, reject traversal and
-symlink/reparse paths, refuse overwrites, restrict new output permissions,
-and finalize atomically in a caller-approved destination. Local files and
-digests do not prove immutable storage, source truth, or independent trust.
+## Non-goals, trust boundaries and stop conditions
 
-Read-only inspection is Tier 0. Bounded code/test/docs/governance writes and
-local synthetic execution are Tier 1 within this scope. The user explicitly
-authorizes branch push and PR creation (Tier 2 remote mutation); never merge
-or force-push. New product dependencies or semantic/schema amendments require
-escalation. Reuse the pinned `jsonschema` dev dependency and the exact Maester
-lab pins; install missing lab prerequisites only in a session-local location
-after an actual missing-dependency failure.
+No merge/auto-merge, release, Pack publication, tenant access, Architecture
+edits, Evidence Envelope/capture schema changes, attestation or receiver
+redesign. Proposed specifications/ADRs remain Proposed. Receiver verification
+stays `not-performed`; source truth stays `not-established`.
+No crash durability, immutable storage, privileged/same-identity attacker
+resistance, arbitrary filesystem certification or OS-enforced egress claim.
+macOS publication remains unsupported.
 
-Stop and report if a source interface requires a tenant, missing facts must
-be fabricated, existing v0.1 invariants must be weakened, a permission
-approval remains unavailable, or Architecture reports a semantic conflict.
+Stop for unapproved scope, concurrent policy drift, unavailable required
+permissions or failures requiring pin/schema/trust weakening. Organisation
+ruleset enumeration returned HTTP 404 with missing `admin:org` scope;
+repository effective-branch rules remain the observable enforcement source.
+Record that visibility limit without expanding token scope.
+The 42 existing local cARL warnings and five harness drifts remain separately
+tracked, unexplained and unrepaired.
 
-## Reconciliation
+## Reconciliation and context reset
 
-Update developer docs and repository-owned memory for the experimental
-capability, commands, supported cardinality, limitations, and unchanged
-proposal status. Preserve shared managed governance byte-for-byte. Close
-this contract as submitted for review after validation and PR creation;
-submission does not approve architecture or authorize future work.
+Update docs/memory for error provenance and execution gate behavior; retain
+historical results as historical. Preserve shared managed assets unchanged.
+Close with verified final CI/PR and actual rule read-back. Future implementation,
+policy changes or merge require a new approved scope.
 
-## Context reset
-
-The authorized synthetic proof and related docs are complete and preserved on
-the linked review branch. This contract is historical scope, not permission
-for subsequent code, provider, policy, publishing, release, or merge actions.
-Future implementation requires a new explicitly approved contract. Envelope
-v0.1, ADR 0002, and the separate preservation proposal remain Proposed.
+Effective read-back confirmed the six GitHub Actions-bound checks, strict
+up-to-date/PR-only rules, no bypass actors and zero required approvals.
+The full suite discovered 147 cases per runner: Windows executed 136 with
+11 Linux-only skips; Linux executed 143 with four Windows-only skips. All
+executed cases, conformance, 36 PowerShell cases and mandatory native proof
+passed. The final delivery report records the documentation head and its own
+fresh PR checks; this code-execution snapshot remains explicit historical
+evidence, not authorization for future implementation or merge.

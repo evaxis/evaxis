@@ -127,11 +127,22 @@ defensively; unsupported numeric precision fails instead of being lost.
 
 The prototype assembler preserves richer lineage in reserved
 `evaxis.capture/0.1`, validates unchanged schemas and package/lineage invariants,
-and publishes two JSON files through restricted staging and no-replace atomic
-local finalization. Windows filesystem checks were executed; Linux publication
-is implemented but unexecuted, and macOS publication is unsupported.
-Privileged/hostile parent replacement, filesystem immutability, cryptographic
-verification, global deduplication and receiver trust are not promised.
+and publishes two JSON files through private staging and no-replace atomic
+local finalization. The separately authorized portable follow-up adds pinned
+Windows ancestor handles and descriptor-relative Linux input/staging/writes/
+rename/cleanup, regular-file checks and explicit unsupported-path/primitive
+failures. Windows directory pinning uses read access without delete sharing:
+metadata-only handles did not prevent ancestor rename in real regression
+execution. Actual Windows Server 2025/Ubuntu 24.04 x64 CI passed with Python
+3.11/3.13, including native capture and Linux's real no-replace syscall;
+[measured configurations](../../docs/evidence-preservation.md) qualify only
+those tested images/runtimes/filesystem observations. macOS publication remains
+unsupported.
+Selected replacement races are mitigated, not arbitrary privileged/same-
+identity attackers, hostile mounts, network filesystems, crash durability,
+immutable storage, cryptographic verification, global deduplication or receiver
+trust. A detected post-rename parent change may leave a complete bundle in the
+original parent but never reports completion or deletes that destination.
 
 Optional native glue uses a one-use caller-runspace registry, explicit scalar
 run/execution/invocation parameters and matching emitted native `Parameters`.
@@ -143,10 +154,39 @@ collection outcomes. It is not a Pack, generic importer or tenant test.
 Use `python tools\validate_conformance.py`,
 `python -B -m unittest discover -s tests\capture -p 'test_*.py' -q`, and
 `pwsh -NoProfile -File tests\capture\Test-Capture.ps1`.
-The native integration test requires the exact source/module pins and
-`EVAXIS_MAESTER_SOURCE`; otherwise its skip is explicit. Runtime scripts never
-install modules or upload evidence. See developer docs for approved
-prerequisite setup and destination/credential/clock limitations.
+The optional local native integration test requires the exact source/module
+pins and `EVAXIS_MAESTER_SOURCE`; otherwise its skip is explicit.
+`tools/ci/` instead reuses hash-locked Python wheels, checksum-verified existing
+Maester/Graph prerequisites and a runner requiring actual native execution.
+The separate capture workflow targets x64 Windows Server 2025/Ubuntu 24.04 and
+Python 3.11/3.13, using read-only permissions, no secrets and fresh runners.
+Native Maester 3.0.0 and the standalone PowerShell suite need no Pester
+dependency. CI configuration is not execution evidence; preserve measured
+results and explicit platform skips. Runtime scripts never install modules or
+upload evidence. See developer docs for prerequisites and trust limitations.
+The final-code [four-job run](https://github.com/evaxis/evaxis/actions/runs/41337237522)
+executed 121 Python cases on each Windows job and 126 on each Linux job out of
+130 discovered, with only opposite-platform skips. Every job passed conformance,
+36 PowerShell cases and the required native two-observation/three-assessment
+proof. Native Failed/Skipped assessment outcomes are not suite skips.
+The initial real Linux execution exposed a non-regular descriptor reaching
+`fdopen`; validation and close now precede stream construction rather than
+relaxing the expected failure semantics.
+
+Publication/integrity errors remain primary when staging or retained-handle
+cleanup also fails. Safe secondary cleanup diagnostics are Python 3.11
+exception notes, separately printed by the CLI; cleanup-only errors still
+fail, and no published destination is removed to conceal uncertainty.
+Local body completion distinguishes cleanup-only errors from an unrelated
+caller's already-handled exception; ambient `sys.exception()` alone cannot
+identify the operation's primary failure.
+The final review adds `Capture validation gate`, an always-run aggregate
+requiring a successful matrix dependency and the exact four fresh mandatory-
+native reports. Ordinary GitHub required checks accept skipped/neutral
+conclusions; require the aggregate as well as cARL and all four matrix names.
+Keep strict/PR-only/no-bypass/zero-approval rules unchanged and review workflow
+changes: required statuses do not authenticate contributor-controlled job code.
+See [merge-gate configuration](../../tools/ci/README.md#merge-gate).
 
 ## Repository-specific trust boundaries
 
@@ -187,6 +227,9 @@ Run `carl doctor`, `carl status`, `carl pack effective`, `carl trace` and
 `carl harness status` with the pinned CLI. The workflow verifies the downloaded
 release checksum. These diagnostics do not prove native harness adherence.
 JFrog Boost must exclude `.github/carl/**` from optimisation.
+Local diagnostics retained 42 pre-existing warnings and five drifted harness
+adapters. Their cause remains unverified; the portable work did not repair
+shared managed assets or treat successful CI as permission to repair them.
 
 ## Proposed next milestone and open decisions
 

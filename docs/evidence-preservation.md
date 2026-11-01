@@ -11,7 +11,9 @@ selects a product stack or licence, or authorizes tenant-connected testing.
 
 ## Reproduce without Maester
 
-Use Windows, PowerShell 7.4+, Python 3.11+, and the existing
+The commands below use Windows paths. For reproducible Windows/Linux execution
+with integrity-checked prerequisites, use the [isolated CI runner](../tools/ci/README.md).
+For this manual Windows example, use PowerShell 7.4+, Python 3.11+, and the existing
 `jsonschema==4.26.0` validation dependency in `requirements-dev.txt`.
 The verified environment was PowerShell 7.6.9 and Python 3.13.16.
 No Maester or Microsoft Graph module is required for this path.
@@ -209,7 +211,9 @@ as a dependency only. No connection is made; a connected Graph context is
 explicitly refused, telemetry is disabled, and no tenant test is authorized.
 
 Prepare the prerequisite in an approved module location if missing; neither
-proof script installs it. A user-local example is:
+proof script installs it. The manual lab example below does not perform the
+new CI package/module-tree checksum checks; use the isolated runner to reproduce
+the current portable qualification. A user-local example is:
 
 ```powershell
 $modules = Join-Path $env:TEMP ('evaxis-modules-' + [Guid]::NewGuid())
@@ -289,20 +293,67 @@ Only finite JSON data is accepted, never scriptblocks, sessions or arbitrary
 PowerShell objects.
 
 Use a caller-approved, trusted local parent directory. Traversal components,
-explicit Windows UNC/device syntax, and symlink/reparse ancestors are rejected.
-This is not a complete network-filesystem or hostile-host detector. Existing
-destinations, even empty directories, are refused. A random sibling staging
-directory is restricted before data is written; files are flushed and synced,
-and a no-replace atomic directory rename publishes both files together.
-No partially written destination is reported as completed evidence.
+Windows UNC/device/alternate-stream and ambiguous names, mapped remote drives
+and symlink/reparse paths are rejected. Inputs must be regular files;
+Linux FIFO opens do not wait for a writer, and non-regular descriptors are
+rejected before JSON reading. These checks are
+not a complete network-filesystem or hostile-host detector.
 
-Windows ACL restriction, existing-destination/race refusal, cleanup and
-reparse rejection were executed. Linux's `renameat2(RENAME_NOREPLACE)` path
-exists but was **not executed** on this Windows host; unsupported platforms
-fail explicitly. macOS publication is not implemented. PowerShell examples
-were verified on Windows, not claimed as cross-platform tested.
-Privileged local users, hostile ancestor replacement, mapped/network storage,
-crash durability and storage immutability remain limitations.
+Linux opens ancestors with directory/no-follow flags and holds their
+descriptors. Input reads, private stage/file creation, no-replace rename and
+cleanup are descriptor-relative. Windows opens verified non-reparse ancestors
+with read access and without delete sharing, preventing ordinary ancestor
+rename while the handles are held; input handles also reject final reparse
+points. This mitigates selected path-substitution races, not arbitrary
+privileged/same-identity filesystem manipulation.
+
+Existing destinations, even empty directories, are refused. Random sibling
+staging is private before payload writes: POSIX directory/file modes are
+0700/0600 at creation, and Windows staging has a restricted owner ACL.
+Files are flushed and fsynced; actual no-replace directory publication exposes
+both complete JSON files together. Linux requires `renameat2(RENAME_NOREPLACE)`
+and refuses unavailable kernel/filesystem support rather than falling back to
+an overwriting rename.
+
+Observable parent identity changes fail explicitly. Linux cleanup stays
+anchored to the original parent instead of deleting through substituted paths.
+If parent movement is detected after rename, no completion is claimed and a
+complete bundle may remain in the original parent; it is not deleted to hide
+the uncertain outcome. Cleanup failures report that incomplete private
+staging may remain. No directory-fsync or power-loss guarantee is introduced.
+
+Publication/parent-integrity failure remains the primary error even if private
+staging deletion, staging-descriptor close or retained ancestor-handle close
+also fails. Additional cleanup failures are fixed, sanitized Python 3.11+
+exception notes (`__notes__`); CLI diagnostics print those notes separately.
+A cleanup-only failure is itself an explicit error, not successful publication.
+This remains true inside an unrelated caller exception handler; successful
+local bodies do not adopt that handled exception as a primary failure.
+Remaining cleanup is still attempted. A successfully renamed destination is
+never deleted to hide an uncertain parent check or close failure.
+
+| Configuration | Execution/support boundary |
+|---|---|
+| Local Windows, Python 3.13.16, PowerShell 7.6.9, NTFS | Original hardening isolated execution passed, including real handle/reparse/no-overwrite races and genuine native capture. |
+| CI Windows Server 2025 x64, NTFS, PowerShell 7.6.7, Python 3.11.9/3.13.16 | Both actual jobs passed: 130 Python cases discovered, 121 executed and nine Linux-only skips; conformance, 36 PowerShell cases and genuine native capture passed. |
+| CI Ubuntu 24.04 x64, PowerShell 7.6.9, Python 3.11.17/3.13.17 | Both actual jobs passed: 130 Python cases discovered, 126 executed and four Windows-only skips; conformance, 36 PowerShell cases and genuine native capture passed, including real Linux no-replace publication. |
+| macOS | Publication unimplemented and explicitly refused; not a validated target. |
+| Other OS/architectures/runtimes and untested filesystem configurations | Unvalidated; successful capability detection is not filesystem-trust certification. |
+| Mapped/network storage, privileged or same-identity attackers, hostile mounts, crash durability and immutable storage | Not established or supported assurance claims. |
+
+These CI results belong to implementation commit
+`a417d5734e59162b0a069e40b56130e25e8c865c` and
+[the four-job execution run](https://github.com/evaxis/evaxis/actions/runs/41337237522).
+Windows runner image `20261021.278.1` and Ubuntu image `20261026.354.1` were
+measured. Linux reported kernel `7.0.0-1017-azure` and filesystem type
+`ext2/ext3` from `stat -f -c %T`; that family label does not establish an exact
+ext4 configuration. Qualification is limited to these tested configurations,
+not all Windows/Linux installations or filesystems.
+
+Wrapper-created Maester association tokens remain consistency checks, not
+upstream identity or attestation. The owning runspace's capture session
+remains mutable, not tamper-resistant. Packages are not promoted as suitable
+for hostile or production collection environments.
 
 No provider collector, hosted service, new storage backend, automatic upload,
 authentication/authorization layer, encryption/signing, receiver verification,
@@ -319,9 +370,43 @@ generated through the pinned native path. The original lab separately executed
 four static Pack checks and nine synthetic native rows; those are not live
 provider or end-to-end preservation checks.
 
-The existing GitHub workflow checks cARL governance only; the capture suites
-were executed locally and are not silently represented as CI tests. Local
-cARL 1.0.2 diagnostics reported zero errors and 42 pre-existing canonical-byte
-warnings, also reproduced on unmodified baseline snapshots with LF and CRLF.
-Their cause is not established. Shared governance was not repaired or synced;
-no policy, adapter, invariant, template, pack, runtime or CI workflow changed.
+The original GitHub workflow still checks cARL governance only. The separate
+[capture workflow](../.github/workflows/capture-validation.yml) now executes
+the existing suites with [verified prerequisites](../tools/ci/README.md);
+the linked four-job run executed the final code on both platforms.
+An earlier Linux run exposed directory descriptors reaching `fdopen` before
+regular-file validation. The implementation now checks and closes non-regular
+descriptors first; the strengthened regression passed on all four jobs.
+The original hardening local Windows run discovered 130 Python cases, executed 121
+successfully and explicitly skipped nine Linux-only cases; the required native
+case executed. All 36 standalone PowerShell cases and conformance passed.
+cARL 1.0.2 diagnostics exited successfully but retained 42 pre-existing warnings
+and five drifted harness adapters. The earlier preservation work reported
+baseline LF/CRLF reproductions; this follow-up did not establish their cause.
+Shared governance was not repaired or synced;
+no shared policy, adapter, invariant, template, pack, runtime or original
+governance workflow was repaired or changed. Repository-owned contract/plan,
+memory and developer documentation are reconciled separately.
+
+The bounded final review additionally fixes primary/secondary cleanup
+provenance and adds an always-run [capture merge gate](../tools/ci/README.md#merge-gate).
+The initial effective ruleset required only governance. The additive owner
+configuration requires all four capture names plus the aggregate, preserving
+strict, PR-only/no-bypass protections and zero required approvals. Current
+effective read-back and final execution evidence belong to the PR report;
+green historical runs alone do not demonstrate merge enforcement.
+
+Final-review code head `53571d64dbf4fb61ff5180e11058c66f62b3c009`
+passed [fresh four-job execution and aggregate](https://github.com/evaxis/evaxis/actions/runs/41341886934)
+and [governance](https://github.com/evaxis/evaxis/actions/runs/41341886928).
+Each job discovered 147 Python cases: Windows executed 136 with 11 Linux-only
+skips; Ubuntu executed 143 with four Windows-only skips. No executed case
+failed; conformance, all 36 PowerShell cases and actual native Maester proof
+passed on every job. These include eight failure-provenance and nine aggregate
+regressions. A caller-handler regression initially failed, exposing ambiguous
+ambient exception context; local completion tracking corrected it before this
+execution. Windows measured image `20261021.278.1`, PowerShell 7.6.7 and NTFS;
+Ubuntu measured image `20261026.354.1`, PowerShell 7.6.9, kernel
+`7.0.0-1017-azure` and filesystem family `ext2/ext3`. Python patch versions
+remain those in the original matrix table. This is bounded runner evidence,
+not expanded filesystem or hostile/production qualification.

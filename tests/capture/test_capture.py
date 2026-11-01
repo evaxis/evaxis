@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+import errno
+import io
 import json
 import os
 import re
@@ -10,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -291,9 +294,9 @@ class FilesystemAndCommands(unittest.TestCase):
         real_finalize = evidence.finalize_directory
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "bundle"
-            def race(staging: Path, target: Path) -> None:
+            def race(staging: Path, target: Path, **arguments) -> None:
                 target.mkdir()
-                real_finalize(staging, target)
+                real_finalize(staging, target, **arguments)
             with patch.object(evidence, "finalize_directory", side_effect=race):
                 with self.assertRaises(evidence.CaptureFailure):
                     evidence.write_bundle(self.capture, destination)
@@ -310,6 +313,176 @@ class FilesystemAndCommands(unittest.TestCase):
     def test_traversal_path_is_rejected(self) -> None:
         with self.assertRaisesRegex(evidence.CaptureFailure, "traversal"):
             evidence.safe_path(Path("parent") / ".." / "target")
+
+    def test_input_directory_is_rejected_as_non_regular(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence.os, "fdopen") as fdopen:
+                with self.assertRaisesRegex(evidence.CaptureFailure, "regular file"):
+                    evidence.read_json(Path(directory))
+            fdopen.assert_not_called()
+
+    def test_competing_processes_publish_exactly_one_complete_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            source = parent / "input.json"
+            source.write_text(json.dumps(self.capture), encoding="utf-8")
+            command = [
+                sys.executable, "-B", str(ROOT / "capture" / "package.py"),
+                "assemble", "--input", str(source), "--output", str(parent / "bundle"),
+            ]
+            processes = [subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(3)]
+            try:
+                outputs = [process.communicate(timeout=120) for process in processes]
+            finally:
+                for process in processes:
+                    if process.poll() is None:
+                        process.kill()
+                        process.communicate()
+            self.assertEqual(sorted(process.returncode for process in processes), [0, 1, 1], outputs)
+            bundle = parent / "bundle"
+            self.assertEqual({item.name for item in bundle.iterdir()}, {"capture.json", "package.json"})
+            self.assertEqual(evidence.read_json(bundle / "capture.json"), self.capture)
+            self.assertEqual(evidence.validate_evidence_package(evidence.read_json(bundle / "package.json"))["observations"], 2)
+            self.assertEqual({item.name for item in parent.iterdir()}, {"input.json", "bundle"})
+
+    def test_file_sync_failure_does_not_publish_or_leak_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence.os, "fsync", side_effect=OSError("synthetic-sensitive-never-log")):
+                with self.assertRaises(evidence.CaptureFailure) as caught:
+                    evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_cleanup_failure_is_explicit_not_success(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", side_effect=OSError("synthetic rename failure")):
+                with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "^atomic output finalization failed$") as caught:
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual(caught.exception.__notes__, [
+                "private staging cleanup failed; incomplete staging may remain",
+            ])
+            self.assertFalse((Path(directory) / "bundle").exists())
+
+    def test_integrity_failure_remains_primary_when_cleanup_fails(self) -> None:
+        primary = evidence.CaptureFailure("input or output parent changed during the operation")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", side_effect=primary):
+                with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
+                    with self.assertRaises(evidence.CaptureFailure) as caught:
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.__notes__, ["private staging cleanup failed; incomplete staging may remain"])
+            self.assertFalse((Path(directory) / "bundle").exists())
+
+    def test_uncertain_parent_after_successful_rename_retains_complete_bundle(self) -> None:
+        original = evidence._check_parent
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            def check(path, descriptor):
+                original(path, descriptor)
+                if destination.exists():
+                    raise evidence.CaptureFailure("synthetic parent uncertainty")
+            with patch.object(evidence, "_check_parent", side_effect=check):
+                with patch.object(evidence.shutil, "rmtree", wraps=evidence.shutil.rmtree) as cleanup:
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "published bundle may remain"):
+                        evidence.write_bundle(self.capture, destination)
+                    cleanup.assert_not_called()
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
+            self.assertEqual(evidence.validate_evidence_package(evidence.read_json(destination / "package.json"))[
+                "receiverVerification"], "not-performed")
+
+    def test_ancestor_close_failure_preserves_primary_and_attempts_all_handles(self) -> None:
+        primary = evidence.CaptureFailure("output destination already exists; overwrites are prohibited")
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            destination.mkdir()
+            if os.name == "nt":
+                api = evidence._windows_api()
+                original = api.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+                target, attribute = api, "CloseHandle"
+            else:
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+                target, attribute = evidence.os, "close"
+            with patch.object(target, attribute, side_effect=close) as closer:
+                with self.assertRaises(evidence.CaptureFailure) as caught:
+                    with evidence._pinned_parent(destination):
+                        raise primary
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.__notes__, ["cannot close protected filesystem handle"])
+            self.assertGreater(closer.call_count, 1)
+
+    def test_cleanup_only_ancestor_failure_is_not_publication_success(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            if os.name == "nt":
+                api = evidence._windows_api()
+                original = api.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+                target, attribute = api, "CloseHandle"
+            else:
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+                target, attribute = evidence.os, "close"
+            with patch.object(target, attribute, side_effect=close):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "cannot close") as caught:
+                    evidence.write_bundle(self.capture, destination)
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
+
+    def test_cli_retains_primary_and_safe_cleanup_note(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            error = io.StringIO()
+            output = io.StringIO()
+            with patch.object(sys, "argv", ["capture", "assemble", "--input", "synthetic.json", "--output", str(destination)]):
+                with patch.object(evidence, "read_json", return_value=self.capture):
+                    with patch.object(evidence, "finalize_directory", side_effect=evidence.CaptureFailure(
+                        "output destination already exists; overwrites are prohibited",
+                    )):
+                        with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
+                            with patch.object(sys, "stderr", error), patch.object(sys, "stdout", output):
+                                self.assertEqual(evidence.main(), 1)
+            self.assertEqual(output.getvalue(), "")
+            self.assertIn("evidence operation failed: output destination already exists", error.getvalue())
+            self.assertIn("additional cleanup failure: private staging cleanup failed", error.getvalue())
+            self.assertNotIn("synthetic-sensitive-never-log", error.getvalue())
+            self.assertNotIn(str(destination), error.getvalue())
+
+    def test_cleanup_only_failure_in_unrelated_handler_is_not_suppressed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            if os.name == "nt":
+                target, attribute = evidence._windows_api(), "CloseHandle"
+                original = target.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+            else:
+                target, attribute = evidence.os, "close"
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+            try:
+                raise ValueError("unrelated caller failure")
+            except ValueError as unrelated:
+                with patch.object(target, attribute, side_effect=close):
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "cannot close"):
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+                self.assertFalse(hasattr(unrelated, "__notes__"))
 
     def test_junction_or_symlink_ancestor_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -364,6 +537,224 @@ class FilesystemAndCommands(unittest.TestCase):
             self.assertEqual(package["manifest"]["coverage"]["status"], "unknown" if unknown else "partial")
 
 
+@unittest.skipUnless(sys.platform == "linux", "Linux descriptor/no-replace cases require a real Linux runner")
+class LinuxFilesystem(unittest.TestCase):
+    def setUp(self) -> None:
+        self.capture = evidence.read_json(GOLDEN / "capture.json")
+
+    def test_actual_no_replace_uses_pinned_directory_descriptor(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", wraps=evidence.finalize_directory) as finalize:
+                evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertGreaterEqual(finalize.call_args.kwargs["parent_fd"], 0)
+            self.assertEqual(evidence.read_json(Path(directory) / "bundle" / "capture.json"), self.capture)
+
+    def test_private_file_mode_is_set_before_sync(self) -> None:
+        modes = []
+        original = os.fsync
+        def inspect(fd: int) -> None:
+            modes.append(os.fstat(fd).st_mode & 0o777)
+            original(fd)
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence.os, "fsync", side_effect=inspect):
+                evidence.write_bundle(self.capture, Path(directory) / "bundle")
+        self.assertEqual(modes, [0o600, 0o600])
+
+    def test_fifo_input_is_rejected_without_waiting_for_a_writer(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "fifo"
+            os.mkfifo(source)
+            result = subprocess.run(
+                [sys.executable, "-B", str(ROOT / "capture" / "package.py"),
+                 "validate-capture", "--input", str(source)],
+                capture_output=True, text=True, timeout=10,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("regular file", result.stderr)
+
+    def test_final_symlink_substitution_between_check_and_open_is_rejected(self) -> None:
+        original = evidence._pinned_parent
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.json"
+            source.write_text("{}", encoding="utf-8")
+            other = Path(directory) / "other.json"
+            other.write_text('{"synthetic-sensitive-never-log":true}', encoding="utf-8")
+            @contextmanager
+            def substitute(path):
+                with original(path) as pinned:
+                    source.unlink()
+                    source.symlink_to(other)
+                    yield pinned
+            with patch.object(evidence, "_pinned_parent", side_effect=substitute):
+                with self.assertRaises(evidence.CaptureFailure) as caught:
+                    evidence.read_json(source)
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertTrue(source.is_symlink())
+
+    def test_parent_replacement_does_not_redirect_publication_or_cleanup(self) -> None:
+        original = evidence.finalize_directory
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "parent"
+            saved = Path(directory) / "original"
+            parent.mkdir()
+            sentinel = None
+            def substitute(staging: Path, destination: Path, **arguments) -> None:
+                nonlocal sentinel
+                parent.rename(saved)
+                parent.mkdir()
+                replacement = parent / staging.name
+                replacement.mkdir()
+                sentinel = replacement / "keep"
+                sentinel.write_text("synthetic-do-not-delete", encoding="utf-8")
+                original(staging, destination, **arguments)
+            with patch.object(evidence, "finalize_directory", side_effect=substitute):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "parent changed"):
+                    evidence.write_bundle(self.capture, parent / "bundle")
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "synthetic-do-not-delete")
+            self.assertEqual(list(saved.iterdir()), [])
+            self.assertFalse((parent / "bundle").exists())
+
+    def test_symlink_ancestor_substitution_keeps_cleanup_in_original_parent(self) -> None:
+        original = evidence.finalize_directory
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "parent"
+            saved = Path(directory) / "original"
+            outside = Path(directory) / "replacement"
+            parent.mkdir()
+            outside.mkdir()
+            def substitute(staging: Path, destination: Path, **arguments) -> None:
+                parent.rename(saved)
+                parent.symlink_to(outside, target_is_directory=True)
+                original(staging, destination, **arguments)
+            with patch.object(evidence, "finalize_directory", side_effect=substitute):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "symlink or reparse"):
+                    evidence.write_bundle(self.capture, parent / "bundle")
+            self.assertEqual(list(saved.iterdir()), [])
+            self.assertEqual(list(outside.iterdir()), [])
+
+    def test_parent_change_after_rename_is_not_reported_as_completion(self) -> None:
+        original = evidence.finalize_directory
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "parent"
+            saved = Path(directory) / "original"
+            parent.mkdir()
+            def substitute(staging: Path, destination: Path, **arguments) -> None:
+                original(staging, destination, **arguments)
+                parent.rename(saved)
+                parent.mkdir()
+            with patch.object(evidence, "finalize_directory", side_effect=substitute):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "published bundle may remain"):
+                    evidence.write_bundle(self.capture, parent / "bundle")
+            self.assertEqual(list(parent.iterdir()), [])
+            self.assertEqual(evidence.read_json(saved / "bundle" / "capture.json"), self.capture)
+
+    def test_staging_close_failure_does_not_prevent_cleanup_or_mask_publication(self) -> None:
+        original = os.close
+        calls = 0
+        def close(descriptor):
+            nonlocal calls
+            original(descriptor)
+            calls += 1
+            if calls == 1:
+                raise OSError("synthetic-sensitive-never-log")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", side_effect=evidence.CaptureFailure(
+                "atomic no-replace directory publication failed",
+            )):
+                with patch.object(evidence.os, "close", side_effect=close):
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "^atomic no-replace directory publication failed$") as caught:
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertEqual(caught.exception.__notes__, ["cannot close private staging descriptor"])
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_staging_close_failure_after_rename_is_cleanup_only_failure(self) -> None:
+        original = os.close
+        calls = 0
+        def close(descriptor):
+            nonlocal calls
+            original(descriptor)
+            calls += 1
+            if calls == 1:
+                raise OSError("synthetic-sensitive-never-log")
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            with patch.object(evidence.os, "close", side_effect=close):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "^cannot close private staging descriptor$") as caught:
+                    evidence.write_bundle(self.capture, destination)
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
+
+    def test_unavailable_no_replace_primitive_has_no_fallback(self) -> None:
+        for error in (errno.ENOSYS, errno.EINVAL, errno.EOPNOTSUPP):
+            with self.subTest(error=error), tempfile.TemporaryDirectory() as directory:
+                with patch.object(evidence.ctypes, "CDLL") as library:
+                    library.return_value.renameat2.return_value = -1
+                    with patch.object(evidence.ctypes, "get_errno", return_value=error):
+                        with self.assertRaisesRegex(evidence.CaptureFailure, "unsupported"):
+                            evidence.write_bundle(self.capture, Path(directory) / "bundle")
+                self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_unsupported_platform_refuses_before_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence.sys, "platform", "darwin"):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "unsupported"):
+                    evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+
+@unittest.skipUnless(os.name == "nt", "Windows handle/reparse/drive cases require a real Windows runner")
+class WindowsFilesystem(unittest.TestCase):
+    def setUp(self) -> None:
+        self.capture = evidence.read_json(GOLDEN / "capture.json")
+
+    def test_stream_device_ambiguous_and_drive_relative_paths_are_rejected(self) -> None:
+        for path in ("capture.json:stream", "NUL", "folder.\\capture.json", "C:relative.json"):
+            with self.subTest(path=path), self.assertRaises(evidence.CaptureFailure):
+                evidence.read_json(Path(path))
+
+    def test_remote_drive_classification_is_refused(self) -> None:
+        with patch.object(evidence._windows_api(), "GetDriveTypeW", return_value=4):
+            with self.assertRaisesRegex(evidence.CaptureFailure, "remote"):
+                evidence.read_json(GOLDEN / "capture.json")
+
+    def test_parent_handles_prevent_ordinary_rename_during_publication(self) -> None:
+        original = evidence.finalize_directory
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "parent"
+            saved = Path(directory) / "renamed"
+            parent.mkdir()
+            def substitute(staging: Path, destination: Path, **arguments) -> None:
+                with self.assertRaises(OSError):
+                    parent.rename(saved)
+                original(staging, destination, **arguments)
+            with patch.object(evidence, "finalize_directory", side_effect=substitute):
+                evidence.write_bundle(self.capture, parent / "bundle")
+            self.assertFalse(saved.exists())
+            self.assertEqual(evidence.read_json(parent / "bundle" / "capture.json"), self.capture)
+
+    def test_final_reparse_substitution_between_check_and_open_is_rejected(self) -> None:
+        original = evidence._windows_open
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.json"
+            source.write_text("{}", encoding="utf-8")
+            target = Path(directory) / "other"
+            target.mkdir()
+            def substitute(path: Path, *, directory: bool) -> int:
+                if not directory:
+                    source.unlink()
+                    env = dict(os.environ, EVAXIS_TEST_LINK=str(source), EVAXIS_TEST_TARGET=str(target))
+                    subprocess.run(
+                        ["pwsh", "-NoProfile", "-NonInteractive", "-Command",
+                         "New-Item -ItemType Junction -Path $env:EVAXIS_TEST_LINK -Target $env:EVAXIS_TEST_TARGET -ErrorAction Stop | Out-Null"],
+                        env=env, capture_output=True, check=True, timeout=30,
+                    )
+                return original(path, directory=directory)
+            with patch.object(evidence, "_windows_open", side_effect=substitute):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "symlink or reparse"):
+                    evidence.read_json(source)
+
+
 class MaesterDependent(unittest.TestCase):
     @unittest.skipUnless(os.environ.get("EVAXIS_MAESTER_SOURCE"), "set EVAXIS_MAESTER_SOURCE to the pinned Maester lab checkout")
     def test_actual_native_capture_and_result_association(self) -> None:
@@ -378,7 +769,16 @@ class MaesterDependent(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             package = evidence.read_json(output / "package.json")
-            self.assertEqual(evidence.validate_evidence_package(package)["assessments"], 3)
+            report = evidence.validate_evidence_package(package)
+            self.assertEqual((report["observations"], report["assessments"]), (2, 3))
+            self.assertEqual(report["receiverVerification"], "not-performed")
+            self.assertEqual(report["sourceTruth"], "not-established")
+            source = evidence.read_json(ROOT / "examples" / "evidence-preservation" / "synthetic-source.json")
+            for actual, original in zip(package["observations"], source["objects"]):
+                self.assertEqual(actual["representation"], original["representation"])
+                self.assertEqual(actual["observedAt"], original["observedAt"])
+                self.assertEqual(actual["target"], original["target"])
+            self.assertEqual([record["outcome"] for record in package["assessments"]], ["pass", "fail", "unknown"])
             associations = [record["extensions"][evidence.EXTENSION]["frameworkAssociation"] for record in package["assessments"]]
             self.assertEqual([item["resultClaim"] for item in associations], ["Passed", "Failed", "Skipped"])
             self.assertEqual(len({item["invocationId"] for item in associations}), 3)
