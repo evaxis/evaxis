@@ -1,0 +1,429 @@
+{
+  "captureContractVersion": "0.1",
+  "envelopeContractVersion": "0.1",
+  "collectionRunId": "synthetic-golden-maester-run-001",
+  "state": "completed",
+  "collector": {
+    "authority": "urn:evaxis:synthetic-collector",
+    "identityClaimStatus": "asserted",
+    "version": "0.1.0",
+    "id": "offline-policy-collector"
+  },
+  "source": {
+    "authority": "urn:evaxis:synthetic-source",
+    "scopeId": "synthetic-workspace",
+    "sourceSystem": "offline-policy-fixture",
+    "sourceVersion": "1"
+  },
+  "requestedScope": {
+    "authority": "urn:evaxis:synthetic-source",
+    "scopeId": "synthetic-workspace",
+    "scopeType": "synthetic-workspace",
+    "description": "Only the three explicitly declared synthetic policy candidates."
+  },
+  "startedAt": "2026-11-01T17:16:48.5968766+00:00",
+  "inventory": {
+    "status": "known",
+    "basis": "Declared fixture candidates only. No real provider inventory or whole-environment completeness is claimed.",
+    "expectedTargets": [
+      {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-001"
+      },
+      {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-002"
+      },
+      {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-003"
+      }
+    ]
+  },
+  "sourceAttempts": [
+    {
+      "attemptId": "attempt:synthetic-policy-001",
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "intendedScope": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "scopeType": "synthetic-workspace",
+        "description": "Only the three explicitly declared synthetic policy candidates."
+      },
+      "intendedTargets": [
+        {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "nativeId": "synthetic-policy-001"
+        }
+      ],
+      "startedAt": "2026-11-01T17:16:49.6730263+00:00",
+      "status": "succeeded",
+      "completedAt": "2026-11-01T17:16:49.7199045+00:00"
+    },
+    {
+      "attemptId": "attempt:synthetic-policy-002",
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "intendedScope": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "scopeType": "synthetic-workspace",
+        "description": "Only the three explicitly declared synthetic policy candidates."
+      },
+      "intendedTargets": [
+        {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "nativeId": "synthetic-policy-002"
+        }
+      ],
+      "startedAt": "2026-11-01T17:16:49.9914322+00:00",
+      "status": "succeeded",
+      "completedAt": "2026-11-01T17:16:49.9977922+00:00"
+    },
+    {
+      "attemptId": "attempt:synthetic-policy-003",
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "intendedScope": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "scopeType": "synthetic-workspace",
+        "description": "Only the three explicitly declared synthetic policy candidates."
+      },
+      "intendedTargets": [
+        {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "nativeId": "synthetic-policy-003"
+        }
+      ],
+      "startedAt": "2026-11-01T17:16:50.0963417+00:00",
+      "status": "unavailable",
+      "limitation": {
+        "description": "The fixture explicitly models a source visibility limitation; no source payload was received.",
+        "code": "synthetic-unavailable"
+      },
+      "visibilityConstraints": [
+        {
+          "kind": "source-limit",
+          "description": "Synthetic target availability is declared in the reviewed fixture."
+        }
+      ],
+      "completedAt": "2026-11-01T17:16:50.1022337+00:00"
+    }
+  ],
+  "observations": [
+    {
+      "record": {
+        "observationId": "observation:synthetic-policy-001",
+        "contractVersion": "0.1",
+        "collectionRunId": "synthetic-golden-maester-run-001",
+        "observedAt": "2026-01-02T03:03:00Z",
+        "source": {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "sourceSystem": "offline-policy-fixture",
+          "sourceVersion": "1"
+        },
+        "target": {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "nativeId": "synthetic-policy-001",
+          "displayName": "Synthetic policy",
+          "kind": "synthetic-policy",
+          "lifecycle": {
+            "state": "active",
+            "basis": "direct-observation"
+          }
+        },
+        "observationType": "configuration",
+        "observationSchema": {
+          "id": "urn:evaxis:synthetic-schema:policy",
+          "version": "1"
+        },
+        "collector": {
+          "authority": "urn:evaxis:synthetic-collector",
+          "identityClaimStatus": "asserted",
+          "version": "0.1.0",
+          "id": "offline-policy-collector"
+        },
+        "representation": {
+          "encoding": "source-native",
+          "mediaType": "application/json",
+          "content": {
+            "enabled": true,
+            "sourceRevision": 1
+          }
+        }
+      },
+      "attemptId": "attempt:synthetic-policy-001",
+      "capturedAt": "2026-11-01T17:16:49.7106453+00:00",
+      "observedAtProvenance": {
+        "origin": "synthetic-fixture",
+        "clockBasis": "Historical source times are explicit synthetic fixture values, not reconstructed collection events; no source clock trust is asserted."
+      },
+      "transformations": []
+    },
+    {
+      "record": {
+        "observationId": "observation:synthetic-policy-002",
+        "contractVersion": "0.1",
+        "collectionRunId": "synthetic-golden-maester-run-001",
+        "observedAt": "2026-01-02T03:04:00+00:00",
+        "source": {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "sourceSystem": "offline-policy-fixture",
+          "sourceVersion": "1"
+        },
+        "target": {
+          "authority": "urn:evaxis:synthetic-source",
+          "scopeId": "synthetic-workspace",
+          "nativeId": "synthetic-policy-002",
+          "displayName": "Synthetic policy",
+          "kind": "synthetic-policy",
+          "lifecycle": {
+            "state": "active",
+            "basis": "direct-observation"
+          }
+        },
+        "observationType": "configuration",
+        "observationSchema": {
+          "id": "urn:evaxis:synthetic-schema:policy",
+          "version": "1"
+        },
+        "collector": {
+          "authority": "urn:evaxis:synthetic-collector",
+          "identityClaimStatus": "asserted",
+          "version": "0.1.0",
+          "id": "offline-policy-collector"
+        },
+        "representation": {
+          "encoding": "source-native",
+          "mediaType": "application/json",
+          "content": {
+            "enabled": false,
+            "sourceRevision": 2
+          }
+        }
+      },
+      "attemptId": "attempt:synthetic-policy-002",
+      "capturedAt": "2026-11-01T17:16:49.9967210+00:00",
+      "observedAtProvenance": {
+        "origin": "synthetic-fixture",
+        "clockBasis": "Historical source times are explicit synthetic fixture values, not reconstructed collection events; no source clock trust is asserted."
+      },
+      "transformations": []
+    }
+  ],
+  "notObserved": [
+    {
+      "target": {
+        "authority": "urn:evaxis:synthetic-source",
+        "scopeId": "synthetic-workspace",
+        "nativeId": "synthetic-policy-003"
+      },
+      "reason": "unavailable",
+      "attemptId": "attempt:synthetic-policy-003",
+      "recordedAt": "2026-11-01T17:16:50.1091018+00:00"
+    }
+  ],
+  "assessments": [
+    {
+      "record": {
+        "assessmentId": "assessment:synthetic-policy-001",
+        "contractVersion": "0.1",
+        "subject": {
+          "authority": "urn:evaxis:synthetic-source",
+          "kind": "synthetic-policy",
+          "nativeId": "synthetic-policy-001",
+          "scopeId": "synthetic-workspace"
+        },
+        "rule": {
+          "authority": "urn:evaxis:synthetic-rule",
+          "version": "0.1.0",
+          "id": "EVAXIS.SYNTHETIC.1001"
+        },
+        "evaluator": {
+          "authority": "urn:maester365:maester",
+          "version": "3.0.0",
+          "id": "native-engine"
+        },
+        "assessedAt": "2026-11-01T17:16:49.7230789+00:00",
+        "executionStatus": "completed",
+        "outcome": "pass",
+        "observationReferences": [
+          "observation:synthetic-policy-001"
+        ],
+        "inputBasis": {
+          "kind": "observations",
+          "rationale": "Rule evaluates only the preserved enabled boolean of this exact source-native target."
+        },
+        "controlCoverage": {
+          "assessedSubjects": [
+            {
+              "authority": "urn:evaxis:synthetic-source",
+              "kind": "synthetic-policy",
+              "nativeId": "synthetic-policy-001",
+              "scopeId": "synthetic-workspace"
+            }
+          ],
+          "unassessedSubjects": [],
+          "status": "complete"
+        },
+        "freshness": {
+          "status": "unknown"
+        }
+      },
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "recordedAt": "2026-11-01T17:16:49.7461164+00:00",
+      "assessedAtProvenance": {
+        "origin": "evaluator-event",
+        "clockBasis": "Actual evaluator event on the local UTC clock; no external clock or freshness verification."
+      },
+      "frameworkAssociation": {
+        "executionId": "79fec323-55e8-4fdb-b67d-91740e79be58",
+        "resultClaim": "Passed",
+        "recordId": "EVAXIS.SYNTHETIC.1001",
+        "collectionRunId": "synthetic-golden-maester-run-001",
+        "invocationId": "a3adf7e5-4bce-4153-bf89-8f023244665e"
+      }
+    },
+    {
+      "record": {
+        "assessmentId": "assessment:synthetic-policy-002",
+        "contractVersion": "0.1",
+        "subject": {
+          "authority": "urn:evaxis:synthetic-source",
+          "kind": "synthetic-policy",
+          "nativeId": "synthetic-policy-002",
+          "scopeId": "synthetic-workspace"
+        },
+        "rule": {
+          "authority": "urn:evaxis:synthetic-rule",
+          "version": "0.1.0",
+          "id": "EVAXIS.SYNTHETIC.1001"
+        },
+        "evaluator": {
+          "authority": "urn:maester365:maester",
+          "version": "3.0.0",
+          "id": "native-engine"
+        },
+        "assessedAt": "2026-11-01T17:16:49.9979418+00:00",
+        "executionStatus": "completed",
+        "outcome": "fail",
+        "observationReferences": [
+          "observation:synthetic-policy-002"
+        ],
+        "inputBasis": {
+          "kind": "observations",
+          "rationale": "Rule evaluates only the preserved enabled boolean of this exact source-native target."
+        },
+        "controlCoverage": {
+          "assessedSubjects": [
+            {
+              "authority": "urn:evaxis:synthetic-source",
+              "kind": "synthetic-policy",
+              "nativeId": "synthetic-policy-002",
+              "scopeId": "synthetic-workspace"
+            }
+          ],
+          "unassessedSubjects": [],
+          "status": "complete"
+        },
+        "freshness": {
+          "status": "unknown"
+        }
+      },
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "recordedAt": "2026-11-01T17:16:50.0046018+00:00",
+      "assessedAtProvenance": {
+        "origin": "evaluator-event",
+        "clockBasis": "Actual evaluator event on the local UTC clock; no external clock or freshness verification."
+      },
+      "frameworkAssociation": {
+        "executionId": "79fec323-55e8-4fdb-b67d-91740e79be58",
+        "resultClaim": "Failed",
+        "recordId": "EVAXIS.SYNTHETIC.1001",
+        "collectionRunId": "synthetic-golden-maester-run-001",
+        "invocationId": "28ba7a94-3ece-4793-9572-e960d9eb0285"
+      }
+    },
+    {
+      "record": {
+        "assessmentId": "assessment:synthetic-policy-003",
+        "contractVersion": "0.1",
+        "subject": {
+          "authority": "urn:evaxis:synthetic-source",
+          "kind": "synthetic-policy",
+          "nativeId": "synthetic-policy-003",
+          "scopeId": "synthetic-workspace"
+        },
+        "rule": {
+          "authority": "urn:evaxis:synthetic-rule",
+          "version": "0.1.0",
+          "id": "EVAXIS.SYNTHETIC.1001"
+        },
+        "evaluator": {
+          "authority": "urn:maester365:maester",
+          "version": "3.0.0",
+          "id": "native-engine"
+        },
+        "assessedAt": "2026-11-01T17:16:50.1097588+00:00",
+        "executionStatus": "not-run",
+        "outcome": "unknown",
+        "observationReferences": [],
+        "inputBasis": {
+          "kind": "no-input",
+          "rationale": "Source evidence was not available; the security rule was not evaluated."
+        },
+        "controlCoverage": {
+          "assessedSubjects": [],
+          "unassessedSubjects": [
+            {
+              "target": {
+                "authority": "urn:evaxis:synthetic-source",
+                "kind": "synthetic-policy",
+                "nativeId": "synthetic-policy-003",
+                "scopeId": "synthetic-workspace"
+              },
+              "reason": "missing-evidence"
+            }
+          ],
+          "status": "unknown"
+        },
+        "freshness": {
+          "status": "unknown"
+        }
+      },
+      "collectionRunId": "synthetic-golden-maester-run-001",
+      "recordedAt": "2026-11-01T17:16:50.1160239+00:00",
+      "assessedAtProvenance": {
+        "origin": "evaluator-event",
+        "clockBasis": "Actual evaluator event on the local UTC clock; no external clock or freshness verification."
+      },
+      "frameworkAssociation": {
+        "executionId": "79fec323-55e8-4fdb-b67d-91740e79be58",
+        "resultClaim": "Skipped",
+        "recordId": "EVAXIS.SYNTHETIC.1001",
+        "collectionRunId": "synthetic-golden-maester-run-001",
+        "invocationId": "f7d5b32d-b9b3-4bc3-ae3e-a2402e3d1266"
+      }
+    }
+  ],
+  "collectorConfiguration": {
+    "version": "synthetic-fixture/1"
+  },
+  "frameworkContext": {
+    "authority": "urn:maester365:maester",
+    "executionId": "79fec323-55e8-4fdb-b67d-91740e79be58",
+    "version": "3.0.0",
+    "id": "native-engine"
+  },
+  "collectionStatus": "partial",
+  "coverageStatus": "partial",
+  "completedAt": "2026-11-01T17:16:50.1478504+00:00"
+}

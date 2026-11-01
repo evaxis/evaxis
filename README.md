@@ -10,10 +10,12 @@ This repository is the future home of its independent core.
 
 ## Status and boundaries
 
-**Confirmed:** this is a governance and documentation foundation only.
-Evidence collection, storage, assessments, drift processing, hosted services,
-authentication and billing are not implemented. There is no product install,
-build system, API or release.
+**Confirmed:** this is a design/governance foundation with proposed schemas,
+validation tooling and a separately authorized **synthetic evidence-preservation
+experiment**. A reusable helper captures source facts before a real
+Maester-native assessment and produces a validated v0.1 package.
+No provider-connected collection, storage service, drift processing, hosted
+service, authentication, billing, product installation or release exists.
 
 Evaxis is not a Maester wrapper or a provider-specific storage/execution layer.
 Maester integration is **Proposed**, including possible Maester Packs and
@@ -33,14 +35,18 @@ These are requirements for future design, not implemented assurance guarantees.
 See the [foundation boundaries](https://github.com/evaxis/architecture/blob/main/adr/0001-foundation-boundaries.md)
 and [initial threat-model scope](https://github.com/evaxis/architecture/blob/main/threat-model/README.md).
 
-## Planned repository contracts
+## Contracts and experimental proof
 
 | Path | Status |
 |---|---|
 | `schemas/{evidence,observations,assessments,manifests}/` | Proposed modular Evidence Envelope v0.1 JSON Schemas; pending architecture review |
 | `tests/conformance/` | Structural fixtures, package-consistency rejection cases, and semantic expectations with preconditions; no comparison engine |
 | `tools/validate_conformance.py` | Validation-only tooling; not a product runtime or comparison engine |
-| `docs/maester-compatibility.md` | Source-verified Maester research and a proposed import boundary; no adapter |
+| `capture/` | Experimental provider-neutral capture `0.1`, local assembly and multi-record validation; separate from Envelope schemas |
+| `integrations/powershell/` | Replaceable explicit-session helper; usable without Maester |
+| `integrations/maester/` | Optional pinned synthetic native callback and execution-associated export, not a Pack or generic result importer |
+| `examples/evidence-preservation/` and `tests/capture/` | Genuinely generated golden package, offline invocation, and executable positive/adversarial tests |
+| `docs/maester-compatibility.md` | Source-verified research plus the bounded native proof; ordinary verdict rows still cannot reconstruct evidence |
 
 The [human-semantic Evidence Envelope v0.1 proposal](https://github.com/evaxis/architecture/blob/main/specifications/evidence-envelope-v0.1.md)
 is authoritative for terminology and intended meaning. This repository owns
@@ -50,6 +56,10 @@ proposals until reviewed and explicitly approved; the contract version is
 receiver-established trust. See [validation instructions](tests/conformance/README.md).
 
 Start with [design-stage orientation](docs/getting-started.md).
+Reproduce the [synthetic/offline proof](docs/evidence-preservation.md) and read
+its explicit supported/unsupported boundary. The distinct
+[preservation proposal](https://github.com/evaxis/architecture/pull/5) remains
+Proposed; implementation and merged earlier PRs do not approve the architecture.
 The [architecture repository](https://github.com/evaxis/architecture) records
 principles, decisions and [roadmap](https://github.com/evaxis/architecture/blob/main/roadmap/README.md).
 
@@ -61,6 +71,8 @@ load it. Bundled cloud/language packs are inactive, not technology decisions.
 
 **Undecided:** implementation language, build system, execution model, backend,
 cloud, detailed contracts and licensing. Public visibility does not mean
-licensed open source. No Evaxis licence is selected; do not introduce
-substantial implementation before that decision. Upstream cARL assets retain
+licensed open source. No Evaxis licence is selected. This bounded experiment
+was explicitly authorized; further product implementation still requires its
+own approval and does not inherit permission from this prototype.
+Upstream cARL assets retain
 their own licence in [third-party notices](THIRD_PARTY_NOTICES.md).

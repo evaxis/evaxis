@@ -1,6 +1,6 @@
 # Maester result compatibility (research)
 
-**Research status:** source-verified findings submitted for review in Core
+**Research status:** source-verified findings merged through Core
 [PR #2](https://github.com/evaxis/evaxis/pull/2). This document is not an
 approved integration contract.
 
@@ -9,18 +9,21 @@ were merged into their repositories' default branches through Architecture
 PR #3 and Core PR #1. The authoritative specification nevertheless records
 its status exactly as **“Proposed; pending maintainer review and explicit
 architectural approval.”** The merged PRs did not change that approval status.
-The four schemas remain unchanged in this remediation.
+The four schemas remain unchanged in the preservation prototype.
 
-**Integration status:** ADR 0002 remains Proposed. No adapter or evidence
-capture interface is implemented or approved; future capture mechanisms are
-alternatives for review, not decisions.
+**Integration status:** ADR 0002 remains Proposed. A separately authorized
+experimental capture helper and synthetic native invocation wrapper now exist;
+neither is an approved architectural API or a generic result importer.
+See [the reproducible preservation proof](evidence-preservation.md) and the
+distinct [evaxis/architecture#5](https://github.com/evaxis/architecture/pull/5)
+proposal. Ordinary native rows still cannot reconstruct source observations.
 
 The full pinned research and proposed architecture decision are available as
-immutable snapshots of the current Architecture PR #4 revision:
+immutable snapshots of the merged Architecture PR #4 revision:
 [compatibility research](https://github.com/evaxis/architecture/blob/b1cf74e4ae14efe123e21ac41c7667306fe71b34/research/maester-compatibility.md)
 and [ADR 0002](https://github.com/evaxis/architecture/blob/b1cf74e4ae14efe123e21ac41c7667306fe71b34/adr/0002-maester-compatibility-boundary.md).
 The [Architecture PR #4](https://github.com/evaxis/architecture/pull/4)
-remains the review thread. The tracked offline verification tool is in
+is the historical review thread, not an outstanding PR. The tracked offline verification tool is in
 [`tools/maester-lab`](../tools/maester-lab/README.md); it fetches the four
 pinned source commits and keeps checkouts and full runtime output outside the
 Core source tree.
@@ -34,7 +37,7 @@ result type declares
 `TenantId`, `TenantContext`, optional `RunMetadata`, `Tests` and optional
 attachments. Native test rows include `Id`, `Result`, `ResultDetail`,
 `Duration`, `ReasonCode`, `ReasonDetail`, `ParentId`, `InstanceId`,
-attributes and a `Package` descriptor.
+attributes, effective `Parameters` and a `Package` descriptor.
 
 This row shape is a Maester result, not a source observation. The synthetic
 capture projection in
@@ -64,7 +67,7 @@ require an assessment subject with authority, scope and native ID, an
 assessment timestamp, and a collection manifest with declared scope, source
 attempts and coverage. Maester's normal per-test rows do not supply all those
 facts. Do not invent placeholders to satisfy schema validation. If a
-complete, internally consistent four-record package cannot be produced, reject
+complete, internally consistent v0.1 package cannot be produced, reject
 the import or preserve the result outside the v0.1 package boundary.
 
 ### Conservative future input contract (proposal, not implemented)
@@ -80,10 +83,11 @@ identity, missing timestamps, ambiguous targets, disconnected sentinels, or
 unsupported fields needed by v0.1. Preserve other Maester fields in the
 untrusted original record, not normative evidence properties.
 
-This is not yet a supported input API: the standard Maester 3 result surface
-does not guarantee those capture facts. No adapter is implemented because
-there is no defensible way to produce a complete schema-valid package from
-the supported synthetic and tenantless result rows alone.
+This is not a supported input API: the standard Maester 3 result surface does
+not guarantee those capture facts. No generic result importer is implemented
+because there is no defensible way to produce a complete schema-valid package
+from the supported synthetic and tenantless result rows alone. The new prototype
+instead captures facts while a synthetic collector still has them.
 
 ## Required negative cases and current disposition
 
@@ -99,7 +103,7 @@ the supported synthetic and tenantless result rows alone.
 | Unknown/conflicting test identity | Reject a conflicting ID/package relationship; retain unknown producer fields only as untrusted raw data. |
 | Missing assessment/collection timestamps | Reject package mapping; never synthesize time from duration, run start, or file metadata. |
 | Unknown target inventory | Leave coverage unknown; test count is not completeness. |
-| Invalid/inconsistent package references | Reject through the existing Core schema/package-consistency validation; no Maester package mapper exists to exercise this path. |
+| Invalid/inconsistent package references | Reject through Core schema/package-consistency validation; the new capture/assembly path exercises multi-record rejection, not a generic Maester result mapper. |
 | Producer says evidence is verified | Preserve only as a producer assertion; do not set receiver-established verification. |
 
 ## Verified offline paths
@@ -137,19 +141,30 @@ Azure and Log Analytics diagnostic data/roles; RK Intune requires Graph
 permissions and a populated tenant. Their result families and denial behavior
 were source-inspected only.
 
-## Adapter and test disposition
+## Original research disposition and current prototype
 
-No adapter code, schema change, new dependency, golden Envelope output or
-package-consistency integration was added: the necessary source/run/subject
-fields are absent or unverified. The fixture projection plus the repeatable
-lab command provide reproducible compatibility observations, not end-to-end
-adapter conformance. Further adversarial cases (same display name/different
-native IDs, unknown inventory, rule-version change, conflicting identity,
-missing timestamps and unverified claims) remain required once a supported
-capture contract exists.
+The original research added no adapter, schema change, new dependency, golden
+Envelope or package assembly: necessary facts were absent from ordinary result
+rows. Its fixture/lab remain compatibility observations, not preservation
+conformance.
 
-**Next milestone:** define and validate a Pack-side minimal evidence
-preservation contract, including collection attempts, timestamps, authority,
-native IDs and explicit source data/references. Then propose the optional
-adapter and run its negative/positive matrix against real captured offline
-results before any tenant-connected test.
+The new separate experiment supplies capture `0.1`, a reusable no-Maester
+PowerShell helper, multi-record assembly/validation, a genuinely produced
+golden package and executable positive/adversarial tests. A one-use
+caller-runspace registry associates a real native callback through explicit
+run/execution/invocation tokens. Native `Parameters` must match; source
+observations are recorded before evaluation, never inferred from the returned
+row or explanatory text.
+
+Actual pinned execution produced one Passed, one Failed and one Skipped
+result, two observations and three assessments with partial scope coverage.
+The unavailable target had no fabricated source timestamp or payload.
+Wrapper tokens are not upstream-issued Maester run IDs or receiver trust.
+No Pack, provider collector, arbitrary result/family/error importer,
+tenant connection or architectural approval is claimed.
+
+**Next milestone:** review the distinct proposed preservation contract and Core
+machine interface, including unresolved API/coverage/assessment questions,
+before a separately authorized provider-connected or receiver implementation.
+The [developer boundary and test evidence](evidence-preservation.md) distinguish
+executed native paths, static checks and unsupported behavior.

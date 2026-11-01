@@ -1,7 +1,9 @@
 # Getting started at the design stage
 
-**Confirmed:** there is no product to install or run. This repository contains
-cARL governance, documentation and reserved contract/scenario directories only.
+**Confirmed:** there is no product to install or deploy. This repository contains
+cARL governance, proposed schemas, validation tooling and an explicitly
+authorized synthetic preservation experiment. It does not select the product
+stack, licence, provider contracts or architectural approval.
 
 1. Read the [project scope](../README.md) and
    [foundation boundaries](https://github.com/evaxis/architecture/blob/main/adr/0001-foundation-boundaries.md).
@@ -16,13 +18,18 @@ cARL governance, documentation and reserved contract/scenario directories only.
 4. Run `carl doctor`, `carl status`, `carl pack effective`, `carl trace` and
    `carl harness status`. The active profile is `foundations`; cloud/language
    assets are bundled but inactive. No language or cloud is selected.
-5. Follow [contribution guidance](../CONTRIBUTING.md) to propose work through a
+5. Read the [Envelope conformance instructions](../tests/conformance/README.md)
+   and [reproducible preservation proof](evidence-preservation.md). The direct
+   example requires no Maester; optional native execution uses exact reviewed
+   lab prerequisites. Tests and output are synthetic/offline only.
+6. Follow [contribution guidance](../CONTRIBUTING.md) to propose work through a
    scoped contract and PR. If using JFrog Boost, exclude `.github/carl/**`
    from optimisation as documented upstream.
 
-**Proposed next milestone:** the Evaxis Evidence Envelope specification and
-approved synthetic conformance fixtures. This is not an invitation to deploy
-infrastructure or invent contracts before review.
+**Proposed next milestone:** explicit review of the unchanged Envelope v0.1
+proposal, the distinct preservation proposal, and the experimental machine
+contract/helper. Existing merge state is not architectural approval. This is
+not an invitation to connect a tenant, deploy infrastructure or publish a Pack.
 
 **Undecided:** licensing, implementation stack, execution environments, storage,
 identity, cryptographic details, commercial terms and integration contracts.

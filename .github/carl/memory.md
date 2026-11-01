@@ -5,8 +5,10 @@
 Evaxis (EVidence + AXIS): Evidence Across Every Axis.
 This repository is the future home of the independent, provider-neutral security
 evidence, provenance, historical analysis and assurance core. It is in the
-foundation/design stage, not an implemented product. No collection, storage,
-assessment, drift, authentication, hosting or billing service exists here.
+foundation/design stage, not an implemented product. A separately authorized
+synthetic preservation experiment now captures source facts and validates a
+complete package; no provider-connected collection, storage, assessment,
+drift, authentication, hosting or billing service exists here.
 
 The canonical logo is the existing organisation avatar:
 https://avatars.githubusercontent.com/u/349042465?v=4
@@ -14,7 +16,15 @@ Reference this URL; do not generate or commit replacement artwork.
 
 ## Repository map
 
-- `docs/getting-started.md`: design-stage orientation, not installation.
+- `docs/getting-started.md`: design-stage orientation, not product installation.
+- `docs/evidence-preservation.md`: reproducible experimental capture/helper,
+  local assembly, optional pinned native execution, and supported boundaries.
+- `capture/`: separate capture `0.1` data schema and prototype Python assembly/
+  validation; not a new normative Envelope contract or product stack choice.
+- `integrations/powershell/`: replaceable explicit-session helper, independent
+  of Maester; `integrations/maester/` holds narrowly scoped synthetic glue.
+- `examples/evidence-preservation/` and `tests/capture/`: genuinely generated
+  golden package and executable positive/adversarial/behavioral tests.
 - `schemas/{evidence,observations,assessments,manifests}/`: proposed modular
   Evidence Envelope v0.1 schemas; the architecture repository's
   `specifications/evidence-envelope-v0.1.md` owns human semantics, while this
@@ -23,7 +33,7 @@ Reference this URL; do not generate or commit replacement artwork.
   reserved scenario directories, without findings or example data.
 - `tests/conformance/`: synthetic schema fixtures and machine-readable
   semantic expectations; validation checks individual shape and the linked
-  package's reference/coverage consistency, not comparison behavior. Producer
+  packages' reference/coverage consistency, not comparison behavior. Producer
   verification/authentication fields remain claims until a separate receiver-
   owned verification record exists.
 - `https://github.com/evaxis/architecture`: architectural records and roadmap.
@@ -67,6 +77,8 @@ These are repository-specific canonical invariants, supplementing the bundled
    Mark claims Confirmed, Proposed or Undecided.
 11. Licensing is undecided. Public visibility is not an open-source licence.
     No root LICENSE or substantial product implementation before approval.
+    The explicitly authorized bounded synthetic helper/proof does not select
+    product licensing/stack or waive future implementation approval.
     Upstream cARL retains its own licence in `THIRD_PARTY_NOTICES.md`.
 12. No secrets, customer evidence, tenant identifiers or sensitive findings in
     public files, issues, fixtures, logs or pull requests.
@@ -80,15 +92,61 @@ These are repository-specific canonical invariants, supplementing the bundled
 boundary and points to Architecture's research/ADR. Native Maester statuses
 are execution and producer assessment claims, not source observations; normal
 rows lack enough run, subject, collection and source provenance to populate a
-complete v0.1 package without invention. There is no Core adapter or schema
-change. Keep any future integration optional and outside provider-neutral
-schemas; reject incomplete mappings rather than fabricate evidence. The v0.1
+complete v0.1 package without invention. There is no generic Core result importer
+or change to the four Envelope schemas. The separately authorized preservation
+prototype instead captures facts inside the actual synthetic native callback.
+Keep integrations optional and outside provider-neutral schemas; reject
+incomplete mappings rather than fabricate evidence. The v0.1
 specification and schemas are merged into their default branches, but the
 authoritative specification remains explicitly proposed pending maintainer
 review and architectural approval. The tracked offline-only verification
 tool is in `tools/maester-lab/`; it fetches exact commits, runs reviewed
 synthetic demo cases and keeps raw output outside the checkout. It is not an
 adapter or provider-connected compatibility test.
+
+## Experimental preservation boundary
+
+Capture `0.1` is provider-neutral JSON referencing the existing proposed
+Envelope `0.1` records. The distinct preservation architecture/ADR proposal is
+in https://github.com/evaxis/architecture/pull/5; neither it, ADR 0002, nor the
+Envelope specification is promoted to approval by this prototype.
+API/coverage/assessment choices remain reviewable proposals.
+
+One capture run has one source authority/scope; one package has one envelope/
+manifest and zero-or-more observations/assessments. Target identity is the
+case-sensitive authority/scope/native-ID tuple. Unknown inventory retains only
+declared candidates and coverage remains unknown; display names and native test
+suffixes do not establish identity or completeness.
+
+The PowerShell helper owns explicit collecting/completed and attempt states.
+Completion is non-idempotent; a session is single-writer and runspace-owned.
+Caller-owned optional run registries are not durable replay protection.
+Source timestamp strings and clock assumptions remain separate from actual
+capture/attempt/run/assessment-recording UTC events. JSON values are copied
+defensively; unsupported numeric precision fails instead of being lost.
+
+The prototype assembler preserves richer lineage in reserved
+`evaxis.capture/0.1`, validates unchanged schemas and package/lineage invariants,
+and publishes two JSON files through restricted staging and no-replace atomic
+local finalization. Windows filesystem checks were executed; Linux publication
+is implemented but unexecuted, and macOS publication is unsupported.
+Privileged/hostile parent replacement, filesystem immutability, cryptographic
+verification, global deduplication and receiver trust are not promised.
+
+Optional native glue uses a one-use caller-runspace registry, explicit scalar
+run/execution/invocation parameters and matching emitted native `Parameters`.
+Those tokens are wrapper-created, not upstream Maester run IDs or attestation.
+The genuine native proof captures two synthetic source facts before evaluation
+and records Passed, Failed and unavailable Skipped as distinct assessment/
+collection outcomes. It is not a Pack, generic importer or tenant test.
+
+Use `python tools\validate_conformance.py`,
+`python -B -m unittest discover -s tests\capture -p 'test_*.py' -q`, and
+`pwsh -NoProfile -File tests\capture\Test-Capture.ps1`.
+The native integration test requires the exact source/module pins and
+`EVAXIS_MAESTER_SOURCE`; otherwise its skip is explicit. Runtime scripts never
+install modules or upload evidence. See developer docs for approved
+prerequisite setup and destination/credential/clock limitations.
 
 ## Repository-specific trust boundaries
 
@@ -132,10 +190,11 @@ JFrog Boost must exclude `.github/carl/**` from optimisation.
 
 ## Proposed next milestone and open decisions
 
-Next: review and explicitly approve the proposed Evaxis Evidence Envelope v0.1
-and linked core schemas/fixtures. The current schema-validation tooling checks
-structure and fixture-data consistency only; it is not a comparison engine and
-does not verify semantic expectations.
+Next: review and explicitly approve the proposed Evaxis Evidence Envelope v0.1,
+the distinct preservation proposal and its experimental machine contract/
+helper. Validation now includes executable capture/assembly behavior, but is
+not a comparison engine and does not verify compact semantic expectations,
+source truth or receiver trust.
 Licensing, contribution rights, execution model, storage adapters, identity,
 cryptographic design, commercial entitlements and all provider contracts remain
 undecided. No partnerships, affiliations or endorsements are established.
