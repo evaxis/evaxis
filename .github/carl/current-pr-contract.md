@@ -1,127 +1,84 @@
-# Portable capture validation and publication hardening
+# Portable capture final review and PR delivery
 
-## Contract status
+## Contract status and goal
 
-Closed - approved Core-only implementation and actual Windows/Linux execution
-completed. Final documentation/branch validation belongs to this closure;
-this contract authorizes no subsequent implementation. No PR was created and
-no merge is authorized.
-This supersedes the closed preservation experiment, now merged in
-[Core #3](https://github.com/evaxis/evaxis/pull/3). Verified starting `main` is
-`0505243eb0cb71a2a65a3795dfef4c1104f73c64`.
+Active - explicitly approved bounded remediation, validation, branch push and
+PR delivery against `main`. Reviewed/start head is
+`321cbea0e059bc68c722efd8438d8eb75945b932` on
+`goldjg-portable-capture-hardening`; fetched `main` remains
+`0505243eb0cb71a2a65a3795dfef4c1104f73c64`. Preserve the completed
+[hardening plan](plans/portable-capture-hardening.md).
+The current plan is [final-review-delivery.md](plans/final-review-delivery.md).
 
-## Goal and approved scope
+Verify F1 (execution merge enforcement) and F2 (cleanup masking primary
+failure), correct only confirmed gaps, execute the supported matrix and open
+a reviewable PR. The new user request explicitly supersedes the historical
+no-PR constraint, not the schema/trust/security limitations.
 
-Harden concrete capture/publication filesystem boundaries and execute the
-existing credential-free suites on Windows and Linux. The linked plan is
-[portable-capture-hardening.md](plans/portable-capture-hardening.md).
+## Approved scope, files and permission checkpoint
 
-Approved scope includes pinned/descriptor-relative filesystem I/O, regular-file
-and unsupported-path checks, private staging, atomic no-replace publication,
-safe cleanup, concrete regressions, a separate least-privilege test workflow,
-integrity-checked existing validation/native prerequisites, actual runner
-execution, developer docs and repository-owned cARL reconciliation.
-CI targets x64 `windows-2025` and `ubuntu-24.04`, Python 3.11 and 3.13,
-with actual runner-provided PowerShell recorded. Passing configurations are
-bounded execution evidence, not universal platform/security support.
+Tier 0: repository/remote inspection and cARL/rules/check diagnostics.
+Tier 1: `capture/package.py`, `tests/capture/test_capture.py`, a bounded gate
+checker/regressions in `tools/ci/` and `tests/capture/`, directly related
+README/docs and repository-owned memory/contract/plans.
+Tier 2: focused capture workflow gate, additive required checks in existing
+`main-foundations` ruleset 26000155, branch pushes/CI and PR creation/update.
+The user explicitly authorized the additive ruleset/aggregate gate:
+preserve all existing protections and verify failed/cancelled/skipped/missing
+matrix execution cannot produce gate success. No merge is authorized.
 
-## Non-goals and forbidden scope
-
-No changes to existing Envelope/capture schema invariants, Architecture,
-shared cARL policy/invariants/templates/packs/adapters/runtime/selection/profiles,
-the existing governance workflow, the historical compatibility lab, or
-unrelated repositories. No tenant connection, credentials, real evidence,
-automatic evidence upload, Pack publication, release, PR creation, merge,
-comparison engine, receiver-verification redesign or cryptographic assurance.
-
-Evidence Envelope v0.1, ADR 0002, Evidence Preservation v0.1 and ADR 0003
-remain Proposed. Receiver verification stays `not-performed`.
-Session tamper-resistance, upstream attestation, crash-durability guarantees
-and general hostile-filesystem/production-suitability claims are non-goals.
-Report any Architecture dependency to the coordinator instead of editing it.
-
-## Expected files
-
-- `.github/carl/current-pr-contract.md`
-- `.github/carl/plans/portable-capture-hardening.md`
-- `.github/carl/memory.md`
-- `capture/package.py`
-- `tests/capture/test_capture.py`
-- `tests/capture/README.md`
-- `.github/workflows/capture-validation.yml`
-- `tools/ci/`
-- Python validation dependency lock
-- `docs/evidence-preservation.md`
-- `README.md`
-
-PowerShell export changes require a concrete coupled boundary failure.
+Preserve strict up-to-date checks, GitHub Actions source binding, PR-only
+updates, empty bypass actors, zero required approvals, review-thread resolution,
+deletion/non-fast-forward protections and existing merge methods.
+Read live state immediately before ruleset mutation; stop on concurrent
+unexpected policy changes. Save prior state and verify effective read-back.
+No Actions permission expansion, dependency/upstream pin/hash changes or
+shared governance repair is authorized.
 
 ## Contract assertions and validation
 
-1. Existing schemas, lineage, coverage, source identity/time semantics and
-   receiver/source-truth report values remain unchanged.
-2. Unsafe input paths cannot redirect reads; non-regular descriptors are
-   rejected before JSON reading and FIFO opens do not wait for a writer.
-   No-follow and ancestor-substitution regressions execute per platform.
-3. Actual Linux `renameat2(RENAME_NOREPLACE)` and Windows rename preserve
-   competitor destinations and expose complete bundles only.
-4. Private permissions, pinned cleanup and explicit failure semantics survive
-   selected parent replacement and write/fsync/rename/cleanup failures.
-5. Every CI configuration executes existing conformance/Python/PowerShell
-   suites and the genuine two-observation/three-assessment native golden with
-   verified prerequisites and no unexpected native skip.
+1. Primary publication/integrity failure remains primary when staging or
+   protected-handle cleanup also fails. Additional fixed safe notes are visible
+   to API callers and CLI; no evidence/path values leak.
+2. Cleanup-only failure is explicit, every cleanup is attempted, no uncertain
+   publication reports success, no published destination is deleted, and
+   no-replace/descriptor/protected-handle semantics are unchanged.
+3. The aggregate always runs after the four-job matrix and fails for failed,
+   cancelled, skipped, neutral or missing execution; exact four fresh reports
+   and mandatory-native/trust results are required.
+4. Effective main rules require cARL, all four exact matrix check names and
+   the aggregate from GitHub Actions. Existing no-bypass/strict/PR-only
+   protections remain. Do not exercise a bypass or direct push against main.
+5. Fresh Windows Server 2025/Ubuntu 24.04 x64 Python 3.11/3.13 execution passes
+   all existing and new regressions, conformance, 36 PowerShell cases and
+   genuine native proof; actual counts/skips/images and links are recorded.
 
-Validate locally on Windows and on actual authorized CI runners. Record
-commands, runtime/image/filesystem metadata, skips, results and CI links.
-A workflow file or platform-mocked test is not platform execution evidence.
+Run focused regressions, then the isolated local Windows runner and full actual
+CI matrix. Run cARL 1.0.2 diagnostics and unchanged governance. Save exact
+completion evidence as a session document and provide its relative path,
+final SHA, PR URL and CI links to the coordinator.
 
-## Trust boundaries and stop conditions
+## Non-goals, trust boundaries and stop conditions
 
-All payloads, paths and native results remain untrusted. Keep existing size,
-depth, credential, diagnostic, identity and schema checks. Operate only in
-caller-approved local storage; pinned ancestors mitigate selected replacement
-races, not privileged/same-identity attackers or hostile filesystems generally.
-Local digests/association tokens establish neither publisher/source identity
-nor receiver trust. No operating-system-enforced egress isolation is claimed.
+No merge/auto-merge, release, Pack publication, tenant access, Architecture
+edits, Evidence Envelope/capture schema changes, attestation or receiver
+redesign. Proposed specifications/ADRs remain Proposed. Receiver verification
+stays `not-performed`; source truth stays `not-established`.
+No crash durability, immutable storage, privileged/same-identity attacker
+resistance, arbitrary filesystem certification or OS-enforced egress claim.
+macOS publication remains unsupported.
 
-Read-only inspection is Tier 0. Bounded code/tests/docs and repository-owned
-contract/plan/memory writes are Tier 1. The user explicitly approved Tier 2
-new CI workflow/dependency preparation and this branch's push for CI.
-Never force-push, create a PR or merge. Reuse existing Python and exact native
-Maester/Graph prerequisites, installed only in isolated session/runner storage.
-Manifest changes or actual missing-dependency failures precede installation.
+Stop for unapproved scope, concurrent policy drift, unavailable required
+permissions or failures requiring pin/schema/trust weakening. Organisation
+ruleset enumeration returned HTTP 404 with missing `admin:org` scope;
+repository effective-branch rules remain the observable enforcement source.
+Record that visibility limit without expanding token scope.
+The 42 existing local cARL warnings and five harness drifts remain separately
+tracked, unexplained and unrepaired.
 
-Stop for tenant/credential requirements, schema/semantic weakening, new product
-dependencies, unapproved scope, unavailable permissions/runners or required
-Architecture amendments. Do not repair the unexplained historical cARL
-warnings or weaken gates to make execution succeed.
+## Reconciliation and context reset
 
-## Reconciliation
-
-Update docs and repository-owned memory for concrete defenses, commands and
-measured platform-specific results. Preserve shared managed governance
-byte-for-byte. Close with persistent commit state and exact executed/unexecuted
-evidence, not PR submission or approval of architecture.
-
-Implementation `a417d5734e59162b0a069e40b56130e25e8c865c` passed
-[all four real CI jobs](https://github.com/evaxis/evaxis/actions/runs/41337237522).
-Each Windows job executed 121 Python cases with nine Linux-only skips; each
-Linux job executed 126 with four Windows-only skips, out of 130 discovered.
-Every configuration passed conformance, 36 standalone PowerShell cases and
-required native capture. Linux's actual no-replace/path/race cases and
-Windows's actual handle/reparse/rename cases executed. Local isolated Windows
-execution also passed with required native capture.
-
-Developer docs, this plan/contract and repository-owned memory record exact
-tested configurations, observed filesystem labels, concrete mitigations and
-remaining limitations. No Architecture amendment was needed or made.
-Existing schemas, integrations, historical lab and shared managed governance
-remain unchanged. The 42 pre-existing local cARL warnings and five drifted
-harness adapters remain unexplained and unrepaired.
-
-## Context reset
-
-This contract does not authorize subsequent providers, policies, publishing,
-release, receiver trust or merge. Future work requires a new approved contract.
-macOS publication stays unsupported; untested configurations and all remaining
-trust/hostile-host/durability limitations must remain explicit.
+Update docs/memory for error provenance and execution gate behavior; retain
+historical results as historical. Preserve shared managed assets unchanged.
+Close with verified final CI/PR and actual rule read-back. Future implementation,
+policy changes or merge require a new approved scope.

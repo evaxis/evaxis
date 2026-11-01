@@ -49,6 +49,13 @@ class CaptureFailure(Exception):
     """A safe diagnostic that never includes source values."""
 
 
+def _cleanup_failure(primary: BaseException | None, diagnostic: str) -> BaseException:
+    if primary is None:
+        return CaptureFailure(diagnostic)
+    primary.add_note(diagnostic)
+    return primary
+
+
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -208,6 +215,7 @@ def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Pat
     except OSError as exc:
         raise CaptureFailure("protected filesystem operation failed") from exc
     finally:
+        primary = sys.exception()
         close_failed = False
         for handle in reversed(handles):
             if os.name == "nt":
@@ -219,7 +227,9 @@ def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Pat
                 except OSError:
                     close_failed = True
         if close_failed:
-            raise CaptureFailure("cannot close protected filesystem handle")
+            failure = _cleanup_failure(primary, "cannot close protected filesystem handle")
+            if primary is None:
+                raise failure from None
 
 
 def _check_parent(path: Path, parent_fd: int | None) -> None:
@@ -749,16 +759,25 @@ def write_bundle(capture: dict[str, Any], destination: Path) -> dict[str, Any]:
         except OSError as exc:
             raise CaptureFailure("atomic output finalization failed") from exc
         finally:
+            primary = sys.exception()
+            failure = primary
             if staging_fd is not None:
-                os.close(staging_fd)
+                try:
+                    os.close(staging_fd)
+                except OSError:
+                    failure = _cleanup_failure(failure, "cannot close private staging descriptor")
             if staging is not None:
                 try:
                     if parent_fd is None:
                         shutil.rmtree(staging)
                     else:
                         shutil.rmtree(staging.name, dir_fd=parent_fd)
-                except OSError as exc:
-                    raise CaptureFailure("private staging cleanup failed; incomplete staging may remain") from exc
+                except OSError:
+                    failure = _cleanup_failure(
+                        failure, "private staging cleanup failed; incomplete staging may remain",
+                    )
+            if primary is None and failure is not None:
+                raise failure from None
     return report
 
 
@@ -782,6 +801,8 @@ def main() -> int:
             result = validate_evidence_package(value)
     except (CaptureFailure, OSError) as exc:
         print(f"evidence operation failed: {exc}", file=sys.stderr)
+        for note in getattr(exc, "__notes__", []):
+            print(f"additional cleanup failure: {note}", file=sys.stderr)
         return 1
     print(json.dumps(result, sort_keys=True))
     return 0

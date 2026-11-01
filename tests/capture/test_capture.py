@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import errno
+import io
 import json
 import os
 import re
@@ -356,10 +357,110 @@ class FilesystemAndCommands(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with patch.object(evidence, "finalize_directory", side_effect=OSError("synthetic rename failure")):
                 with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
-                    with self.assertRaisesRegex(evidence.CaptureFailure, "incomplete staging may remain") as caught:
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "^atomic output finalization failed$") as caught:
                         evidence.write_bundle(self.capture, Path(directory) / "bundle")
             self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual(caught.exception.__notes__, [
+                "private staging cleanup failed; incomplete staging may remain",
+            ])
             self.assertFalse((Path(directory) / "bundle").exists())
+
+    def test_integrity_failure_remains_primary_when_cleanup_fails(self) -> None:
+        primary = evidence.CaptureFailure("input or output parent changed during the operation")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", side_effect=primary):
+                with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
+                    with self.assertRaises(evidence.CaptureFailure) as caught:
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.__notes__, ["private staging cleanup failed; incomplete staging may remain"])
+            self.assertFalse((Path(directory) / "bundle").exists())
+
+    def test_uncertain_parent_after_successful_rename_retains_complete_bundle(self) -> None:
+        original = evidence._check_parent
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            def check(path, descriptor):
+                original(path, descriptor)
+                if destination.exists():
+                    raise evidence.CaptureFailure("synthetic parent uncertainty")
+            with patch.object(evidence, "_check_parent", side_effect=check):
+                with patch.object(evidence.shutil, "rmtree", wraps=evidence.shutil.rmtree) as cleanup:
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "published bundle may remain"):
+                        evidence.write_bundle(self.capture, destination)
+                    cleanup.assert_not_called()
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
+            self.assertEqual(evidence.validate_evidence_package(evidence.read_json(destination / "package.json"))[
+                "receiverVerification"], "not-performed")
+
+    def test_ancestor_close_failure_preserves_primary_and_attempts_all_handles(self) -> None:
+        primary = evidence.CaptureFailure("output destination already exists; overwrites are prohibited")
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            destination.mkdir()
+            if os.name == "nt":
+                api = evidence._windows_api()
+                original = api.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+                target, attribute = api, "CloseHandle"
+            else:
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+                target, attribute = evidence.os, "close"
+            with patch.object(target, attribute, side_effect=close) as closer:
+                with self.assertRaises(evidence.CaptureFailure) as caught:
+                    with evidence._pinned_parent(destination):
+                        raise primary
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.__notes__, ["cannot close protected filesystem handle"])
+            self.assertGreater(closer.call_count, 1)
+
+    def test_cleanup_only_ancestor_failure_is_not_publication_success(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            if os.name == "nt":
+                api = evidence._windows_api()
+                original = api.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+                target, attribute = api, "CloseHandle"
+            else:
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+                target, attribute = evidence.os, "close"
+            with patch.object(target, attribute, side_effect=close):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "cannot close") as caught:
+                    evidence.write_bundle(self.capture, destination)
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
+
+    def test_cli_retains_primary_and_safe_cleanup_note(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            error = io.StringIO()
+            output = io.StringIO()
+            with patch.object(sys, "argv", ["capture", "assemble", "--input", "synthetic.json", "--output", str(destination)]):
+                with patch.object(evidence, "read_json", return_value=self.capture):
+                    with patch.object(evidence, "finalize_directory", side_effect=evidence.CaptureFailure(
+                        "output destination already exists; overwrites are prohibited",
+                    )):
+                        with patch.object(evidence.shutil, "rmtree", side_effect=OSError("synthetic-sensitive-never-log")):
+                            with patch.object(sys, "stderr", error), patch.object(sys, "stdout", output):
+                                self.assertEqual(evidence.main(), 1)
+            self.assertEqual(output.getvalue(), "")
+            self.assertIn("evidence operation failed: output destination already exists", error.getvalue())
+            self.assertIn("additional cleanup failure: private staging cleanup failed", error.getvalue())
+            self.assertNotIn("synthetic-sensitive-never-log", error.getvalue())
+            self.assertNotIn(str(destination), error.getvalue())
 
     def test_junction_or_symlink_ancestor_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -524,6 +625,43 @@ class LinuxFilesystem(unittest.TestCase):
                     evidence.write_bundle(self.capture, parent / "bundle")
             self.assertEqual(list(parent.iterdir()), [])
             self.assertEqual(evidence.read_json(saved / "bundle" / "capture.json"), self.capture)
+
+    def test_staging_close_failure_does_not_prevent_cleanup_or_mask_publication(self) -> None:
+        original = os.close
+        calls = 0
+        def close(descriptor):
+            nonlocal calls
+            original(descriptor)
+            calls += 1
+            if calls == 1:
+                raise OSError("synthetic-sensitive-never-log")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(evidence, "finalize_directory", side_effect=evidence.CaptureFailure(
+                "atomic no-replace directory publication failed",
+            )):
+                with patch.object(evidence.os, "close", side_effect=close):
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "^atomic no-replace directory publication failed$") as caught:
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+            self.assertEqual(caught.exception.__notes__, ["cannot close private staging descriptor"])
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_staging_close_failure_after_rename_is_cleanup_only_failure(self) -> None:
+        original = os.close
+        calls = 0
+        def close(descriptor):
+            nonlocal calls
+            original(descriptor)
+            calls += 1
+            if calls == 1:
+                raise OSError("synthetic-sensitive-never-log")
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "bundle"
+            with patch.object(evidence.os, "close", side_effect=close):
+                with self.assertRaisesRegex(evidence.CaptureFailure, "^cannot close private staging descriptor$") as caught:
+                    evidence.write_bundle(self.capture, destination)
+            self.assertNotIn("synthetic-sensitive-never-log", str(caught.exception))
+            self.assertEqual({entry.name for entry in Path(directory).iterdir()}, {"bundle"})
+            self.assertEqual(evidence.read_json(destination / "capture.json"), self.capture)
 
     def test_unavailable_no_replace_primitive_has_no_fallback(self) -> None:
         for error in (errno.ENOSYS, errno.EINVAL, errno.EOPNOTSUPP):
