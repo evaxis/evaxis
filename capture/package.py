@@ -199,6 +199,7 @@ def _windows_open(path: Path, *, directory: bool) -> int:
 def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Path, int | None]]:
     absolute = safe_path(path, must_exist=must_exist)
     handles: list[int] = []
+    completed = False
     try:
         if os.name == "nt":
             for component in reversed(absolute.parents):
@@ -212,10 +213,12 @@ def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Pat
             for component in absolute.parent.relative_to(absolute.anchor).parts:
                 handles.append(os.open(component, flags, dir_fd=handles[-1]))
             yield absolute, handles[-1]
+        completed = True
     except OSError as exc:
         raise CaptureFailure("protected filesystem operation failed") from exc
     finally:
-        primary = sys.exception()
+        # A successful body must not inherit an unrelated caller's handled error.
+        primary = None if completed else sys.exception()
         close_failed = False
         for handle in reversed(handles):
             if os.name == "nt":
@@ -726,6 +729,7 @@ def write_bundle(capture: dict[str, Any], destination: Path) -> dict[str, Any]:
             raise CaptureFailure("output destination already exists; overwrites are prohibited")
         staging: Path | None = None
         staging_fd: int | None = None
+        completed = False
         try:
             if parent_fd is None:
                 staging = Path(tempfile.mkdtemp(prefix=".evaxis-", dir=destination.parent))
@@ -756,10 +760,11 @@ def write_bundle(capture: dict[str, Any], destination: Path) -> dict[str, Any]:
                 _check_parent(destination, parent_fd)
             except (CaptureFailure, OSError) as exc:
                 raise CaptureFailure("output parent changed; a published bundle may remain in the original parent") from exc
+            completed = True
         except OSError as exc:
             raise CaptureFailure("atomic output finalization failed") from exc
         finally:
-            primary = sys.exception()
+            primary = None if completed else sys.exception()
             failure = primary
             if staging_fd is not None:
                 try:

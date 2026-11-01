@@ -462,6 +462,28 @@ class FilesystemAndCommands(unittest.TestCase):
             self.assertNotIn("synthetic-sensitive-never-log", error.getvalue())
             self.assertNotIn(str(destination), error.getvalue())
 
+    def test_cleanup_only_failure_in_unrelated_handler_is_not_suppressed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            if os.name == "nt":
+                target, attribute = evidence._windows_api(), "CloseHandle"
+                original = target.CloseHandle
+                def close(handle):
+                    original(handle)
+                    return 0
+            else:
+                target, attribute = evidence.os, "close"
+                original = os.close
+                def close(handle):
+                    original(handle)
+                    raise OSError("synthetic-sensitive-never-log")
+            try:
+                raise ValueError("unrelated caller failure")
+            except ValueError as unrelated:
+                with patch.object(target, attribute, side_effect=close):
+                    with self.assertRaisesRegex(evidence.CaptureFailure, "cannot close"):
+                        evidence.write_bundle(self.capture, Path(directory) / "bundle")
+                self.assertFalse(hasattr(unrelated, "__notes__"))
+
     def test_junction_or_symlink_ancestor_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "target"

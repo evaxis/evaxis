@@ -145,16 +145,18 @@ introduced. macOS publication remains unsupported.
 
 ## Final-review regressions
 
-The follow-up adds seven publication/cleanup regressions and nine aggregate
-gate cases. The current suite discovers 146 cases. Local isolated Windows
-executed 135 successfully, with 11 Linux-only skips, conformance, all 36
+The follow-up adds eight publication/cleanup regressions and nine aggregate
+gate cases. The current suite discovers 147 cases. Local isolated Windows
+executed 136 successfully, with 11 Linux-only skips, conformance, all 36
 PowerShell cases and required native capture.
 
 Primary publication/integrity errors remain primary when cleanup also fails;
 safe notes preserve staging/handle failures and CLI output includes them.
 Publication failure with successful cleanup, secondary deletion failure,
 ancestor/descriptor close failure, cleanup-only close failure, uncertain
-parent after successful rename and clean/no-overwrite success are covered.
+parent after successful rename, an unrelated caller exception handler and
+clean/no-overwrite success are covered. Successful bodies do not inherit a
+caller's already-handled exception as their own primary failure.
 There is no ordinary success path with an unrenamed staging directory:
 staging deletion runs on failure; after successful rename the source stage
 no longer exists. The cleanup-only regression therefore exercises actual
