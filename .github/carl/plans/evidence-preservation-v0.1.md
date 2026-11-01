@@ -2,7 +2,9 @@
 
 ## Status and goal
 
-Active, user-authorized implementation on `goldjg-capture-helper-proof`.
+Closed - implemented and submitted for review in
+[Core #3](https://github.com/evaxis/evaxis/pull/3) on
+`goldjg-capture-helper-proof`, without merge.
 Demonstrate synthetic source -> reusable helper -> Maester-native assessment
 -> Evidence Envelope v0.1 -> schema and package-consistency validation.
 Existing v0.1 and ADR 0002 remain Proposed; this is not architectural approval.
@@ -96,3 +98,10 @@ capability and reproducible commands now exist. Do not mutate shared policy
 or imply approved product/architecture decisions. Close the contract and plan
 as submitted for review only after the verified PR exists; preserve remaining
 limitations and separate the Architecture proposal from Core implementation.
+
+The implementation, local validation, developer docs and durable experimental
+memory are complete. The linked PR remains a review artifact, not approval of
+Envelope v0.1, ADR 0002 or
+[evaxis/architecture#5](https://github.com/evaxis/architecture/pull/5).
+This closed plan grants no future implementation, tenant, publication, release
+or merge authority; start a new approved contract for subsequent work.

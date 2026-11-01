@@ -2,7 +2,8 @@
 
 ## Contract status
 
-Active - user-authorized implementation and pull request, without merge.
+Closed - implemented, validated, and submitted for review in
+[Core #3](https://github.com/evaxis/evaxis/pull/3), without merge.
 This contract explicitly supersedes the closed compatibility-remediation
 contract. Core PR #2 and Architecture PR #4 are merged, verified on
 2026-11-01. Latest Core `main` is
@@ -99,3 +100,11 @@ capability, commands, supported cardinality, limitations, and unchanged
 proposal status. Preserve shared managed governance byte-for-byte. Close
 this contract as submitted for review after validation and PR creation;
 submission does not approve architecture or authorize future work.
+
+## Context reset
+
+The authorized synthetic proof and related docs are complete and preserved on
+the linked review branch. This contract is historical scope, not permission
+for subsequent code, provider, policy, publishing, release, or merge actions.
+Future implementation requires a new explicitly approved contract. Envelope
+v0.1, ADR 0002, and the separate preservation proposal remain Proposed.
