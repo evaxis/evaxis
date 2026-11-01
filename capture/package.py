@@ -7,20 +7,23 @@ import argparse
 import copy
 import ctypes
 import csv
+import errno
 import io
 import json
 import os
 import re
+import secrets
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from functools import lru_cache
-from typing import Any
+from typing import Any, Iterator
 
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
@@ -109,6 +112,16 @@ def safe_path(path: Path, *, must_exist: bool = True) -> Path:
     if ".." in path.parts or (os.name == "nt" and str(path).startswith("\\\\")):
         raise CaptureFailure("traversal, network, and device paths are unsupported")
     absolute = Path(os.path.abspath(path))
+    if os.name == "nt":
+        if path.drive and not path.root:
+            raise CaptureFailure("drive-relative paths are unsupported")
+        devices = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+                   *(f"LPT{i}" for i in range(1, 10))}
+        if any(":" in part or part.rstrip(" .") != part or
+               part.split(".")[0].upper() in devices for part in absolute.parts[1:]):
+            raise CaptureFailure("Windows stream, device, and ambiguous paths are unsupported")
+        if _windows_api().GetDriveTypeW(absolute.anchor) not in {2, 3, 5, 6}:
+            raise CaptureFailure("remote or unidentified Windows drives are unsupported")
     for component in (*reversed(absolute.parents), absolute):
         try:
             info = component.lstat()
@@ -125,11 +138,112 @@ def safe_path(path: Path, *, must_exist: bool = True) -> Path:
     return absolute
 
 
-def read_json(path: Path) -> Any:
-    safe = safe_path(path)
+class _WindowsAttributes(ctypes.Structure):
+    _fields_ = [("attributes", ctypes.c_uint32), ("reparse_tag", ctypes.c_uint32)]
+
+
+@lru_cache(maxsize=1)
+def _windows_api() -> Any:
+    # ctypes is a dynamic native API boundary; signatures are fixed explicitly.
+    api = ctypes.WinDLL("kernel32", use_last_error=True)
+    api.CreateFileW.argtypes = [
+        ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+        ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+    ]
+    api.CreateFileW.restype = ctypes.c_void_p
+    api.GetFileInformationByHandleEx.argtypes = [
+        ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32,
+    ]
+    api.GetFileInformationByHandleEx.restype = ctypes.c_int
+    api.GetFileType.argtypes = [ctypes.c_void_p]
+    api.GetFileType.restype = ctypes.c_uint32
+    api.GetDriveTypeW.argtypes = [ctypes.c_wchar_p]
+    api.GetDriveTypeW.restype = ctypes.c_uint32
+    api.CloseHandle.argtypes = [ctypes.c_void_p]
+    api.CloseHandle.restype = ctypes.c_int
+    return api
+
+
+def _windows_open(path: Path, *, directory: bool) -> int:
+    api = _windows_api()
+    handle = api.CreateFileW(
+        str(path), 0x80000000,
+        3 if directory else 1, None, 3, 0x02000000 | 0x00200000, None,
+    )
+    if handle == ctypes.c_void_p(-1).value:
+        raise CaptureFailure("cannot open a protected filesystem handle")
     try:
-        with safe.open("rb") as stream:
-            data = stream.read(MAX_BYTES + 1)
+        attributes = _WindowsAttributes()
+        if not api.GetFileInformationByHandleEx(handle, 9, ctypes.byref(attributes), ctypes.sizeof(attributes)):
+            raise CaptureFailure("cannot inspect filesystem handle")
+        if attributes.attributes & 0x400:
+            raise CaptureFailure("symlink or reparse path is unsupported")
+        if bool(attributes.attributes & 0x10) != directory or api.GetFileType(handle) != 1:
+            raise CaptureFailure("JSON input must be a regular file" if not directory else "parent must be a directory")
+    except CaptureFailure:
+        api.CloseHandle(handle)
+        raise
+    return handle
+
+
+@contextmanager
+def _pinned_parent(path: Path, *, must_exist: bool = True) -> Iterator[tuple[Path, int | None]]:
+    absolute = safe_path(path, must_exist=must_exist)
+    handles: list[int] = []
+    try:
+        if os.name == "nt":
+            for component in reversed(absolute.parents):
+                handles.append(_windows_open(component, directory=True))
+            yield absolute, None
+        else:
+            if os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW"):
+                raise CaptureFailure("no-follow filesystem I/O is unsupported on this platform")
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+            handles.append(os.open(absolute.anchor, flags))
+            for component in absolute.parent.relative_to(absolute.anchor).parts:
+                handles.append(os.open(component, flags, dir_fd=handles[-1]))
+            yield absolute, handles[-1]
+    except OSError as exc:
+        raise CaptureFailure("protected filesystem operation failed") from exc
+    finally:
+        for handle in reversed(handles):
+            if os.name == "nt":
+                if not _windows_api().CloseHandle(handle):
+                    raise CaptureFailure("cannot close protected filesystem handle")
+            else:
+                os.close(handle)
+
+
+def _check_parent(path: Path, parent_fd: int | None) -> None:
+    safe_path(path.parent)
+    if parent_fd is not None:
+        current = path.parent.stat()
+        pinned = os.fstat(parent_fd)
+        if (current.st_dev, current.st_ino) != (pinned.st_dev, pinned.st_ino):
+            raise CaptureFailure("input or output parent changed during the operation")
+
+
+def read_json(path: Path) -> Any:
+    try:
+        with _pinned_parent(path) as (safe, parent_fd):
+            if os.name == "nt":
+                import msvcrt
+
+                handle = _windows_open(safe, directory=False)
+                try:
+                    fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+                except OSError:
+                    _windows_api().CloseHandle(handle)
+                    raise
+            else:
+                fd = os.open(
+                    safe.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                    dir_fd=parent_fd,
+                )
+            with os.fdopen(fd, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise CaptureFailure("JSON input must be a regular file")
+                data = stream.read(MAX_BYTES + 1)
     except OSError as exc:
         raise CaptureFailure("cannot read JSON input") from exc
     return decode_json(data)
@@ -556,10 +670,13 @@ def restrict_directory(path: Path) -> None:
         raise CaptureFailure("cannot restrict output directory permissions") from exc
 
 
-def finalize_directory(staging: Path, destination: Path) -> None:
+def finalize_directory(staging: Path, destination: Path, *, parent_fd: int | None = None) -> None:
+    _check_parent(destination, parent_fd)
     if os.name == "nt":
         os.rename(staging, destination)
         return
+    if sys.platform != "linux":
+        raise CaptureFailure("atomic no-replace directory publication is unsupported on this platform")
     libc = ctypes.CDLL(None, use_errno=True)
     try:
         rename = libc.renameat2
@@ -567,38 +684,72 @@ def finalize_directory(staging: Path, destination: Path) -> None:
         raise CaptureFailure("atomic no-replace directory publication is unsupported on this platform") from exc
     rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
     rename.restype = ctypes.c_int
-    if rename(-100, os.fsencode(staging), -100, os.fsencode(destination), 1) != 0:
+    descriptor = parent_fd if parent_fd is not None else -100
+    source = staging.name if parent_fd is not None else staging
+    target = destination.name if parent_fd is not None else destination
+    if rename(descriptor, os.fsencode(source), descriptor, os.fsencode(target), 1) != 0:
+        error = ctypes.get_errno()
+        if error == errno.EEXIST:
+            raise CaptureFailure("output destination already exists; overwrites are prohibited")
+        if error in {errno.ENOSYS, errno.EINVAL, errno.EOPNOTSUPP}:
+            raise CaptureFailure("atomic no-replace publication is unsupported by this filesystem or kernel")
         raise CaptureFailure("atomic no-replace directory publication failed")
 
 
 def write_bundle(capture: dict[str, Any], destination: Path) -> dict[str, Any]:
     package = assemble(capture)
-    destination = safe_path(destination, must_exist=False)
-    if destination.exists():
-        raise CaptureFailure("output destination already exists; overwrites are prohibited")
-    staging: Path | None = None
-    try:
-        staging = Path(tempfile.mkdtemp(prefix=".evaxis-", dir=destination.parent))
-        restrict_directory(staging)
-        for name, value in (("capture.json", capture), ("package.json", package)):
-            data = (json.dumps(value, ensure_ascii=True, allow_nan=False, indent=2) + "\n").encode("utf-8")
-            if len(data) > MAX_BYTES:
-                raise CaptureFailure("assembled output exceeds the 1 MB per-file limit")
-            with (staging / name).open("xb") as stream:
-                stream.write(data)
-                stream.flush()
-                os.fsync(stream.fileno())
-            if os.name != "nt":
-                (staging / name).chmod(0o600)
-        safe_path(destination.parent)
-        finalize_directory(staging, destination)
-        staging = None
-    except OSError as exc:
-        raise CaptureFailure("atomic output finalization failed") from exc
-    finally:
-        if staging is not None:
-            shutil.rmtree(staging)
-    return validate_evidence_package(package)
+    report = validate_evidence_package(package)
+    if os.name != "nt" and (sys.platform != "linux" or not shutil.rmtree.avoids_symlink_attacks):
+        raise CaptureFailure("protected no-replace publication is unsupported on this platform")
+    with _pinned_parent(destination, must_exist=False) as (destination, parent_fd):
+        if destination.exists():
+            raise CaptureFailure("output destination already exists; overwrites are prohibited")
+        staging: Path | None = None
+        staging_fd: int | None = None
+        try:
+            if parent_fd is None:
+                staging = Path(tempfile.mkdtemp(prefix=".evaxis-", dir=destination.parent))
+                restrict_directory(staging)
+            else:
+                name = ".evaxis-" + secrets.token_hex(16)
+                os.mkdir(name, mode=0o700, dir_fd=parent_fd)
+                staging = destination.parent / name
+                staging_fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                     dir_fd=parent_fd)
+            for name, value in (("capture.json", capture), ("package.json", package)):
+                data = (json.dumps(value, ensure_ascii=True, allow_nan=False, indent=2) + "\n").encode("utf-8")
+                if len(data) > MAX_BYTES:
+                    raise CaptureFailure("assembled output exceeds the 1 MB per-file limit")
+                if staging_fd is None:
+                    stream = (staging / name).open("xb")
+                else:
+                    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                 0o600, dir_fd=staging_fd)
+                    stream = os.fdopen(fd, "wb")
+                with stream:
+                    stream.write(data)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            finalize_directory(staging, destination, parent_fd=parent_fd)
+            staging = None
+            try:
+                _check_parent(destination, parent_fd)
+            except (CaptureFailure, OSError) as exc:
+                raise CaptureFailure("output parent changed; a published bundle may remain in the original parent") from exc
+        except OSError as exc:
+            raise CaptureFailure("atomic output finalization failed") from exc
+        finally:
+            if staging_fd is not None:
+                os.close(staging_fd)
+            if staging is not None:
+                try:
+                    if parent_fd is None:
+                        shutil.rmtree(staging)
+                    else:
+                        shutil.rmtree(staging.name, dir_fd=parent_fd)
+                except OSError as exc:
+                    raise CaptureFailure("private staging cleanup failed; incomplete staging may remain") from exc
+    return report
 
 
 def main() -> int:
